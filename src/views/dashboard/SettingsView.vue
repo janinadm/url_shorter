@@ -180,7 +180,7 @@ const usagePercent = computed(() => {
 
 async function handleLogout() {
   await authStore.signOut()
-  router.push('/login')
+  router.push('/')
 }
 
 async function updateProfile() {
@@ -217,9 +217,10 @@ onMounted(() => {
 @use '@/assets/scss/variables' as *;
 @use '@/assets/scss/mixins' as *;
 
+$sidebar-width: 260px;
+
 .dashboard {
-  display: grid;
-  grid-template-columns: 260px 1fr;
+  display: flex;
   min-height: 100vh;
 }
 
@@ -233,7 +234,13 @@ onMounted(() => {
   top: 0;
   left: 0;
   bottom: 0;
-  width: 260px;
+  width: $sidebar-width;
+  z-index: 100;
+
+  @media (max-width: $breakpoint-md) {
+    transform: translateX(-100%);
+    transition: transform $transition-base;
+  }
 
   &__logo {
     display: flex;
@@ -297,16 +304,22 @@ onMounted(() => {
     @include flex-center;
     width: 40px;
     height: 40px;
+    flex-shrink: 0;
     background: $gradient-primary;
     color: $white;
     font-weight: $font-weight-bold;
     border-radius: $radius-full;
   }
 
+  &__user-info {
+    min-width: 0;
+  }
+
   &__user-name {
     font-weight: $font-weight-medium;
     color: $gray-900;
     font-size: $font-size-sm;
+    @include truncate;
   }
 
   &__user-plan {
@@ -333,26 +346,49 @@ onMounted(() => {
 }
 
 .main {
-  margin-left: 260px;
+  flex: 1;
+  margin-left: $sidebar-width;
   background: $gray-50;
   min-height: 100vh;
+  width: calc(100% - #{$sidebar-width});
+
+  @media (max-width: $breakpoint-md) {
+    margin-left: 0;
+    width: 100%;
+  }
 }
 
 .header {
   background: $white;
   border-bottom: 1px solid $gray-200;
-  padding: $spacing-6 $spacing-8;
+  padding: $spacing-4 $spacing-6;
+
+  @media (min-width: $breakpoint-md) {
+    padding: $spacing-6 $spacing-8;
+  }
 
   &__title {
-    font-size: $font-size-2xl;
+    font-size: $font-size-xl;
     font-weight: $font-weight-bold;
     color: $gray-900;
+
+    @media (min-width: $breakpoint-md) {
+      font-size: $font-size-2xl;
+    }
   }
 }
 
 .content {
-  padding: $spacing-8;
+  padding: $spacing-4;
   max-width: 900px;
+
+  @media (min-width: $breakpoint-md) {
+    padding: $spacing-6;
+  }
+
+  @media (min-width: $breakpoint-lg) {
+    padding: $spacing-8;
+  }
 }
 
 .settings-section {
@@ -363,9 +399,14 @@ onMounted(() => {
     font-size: $font-size-lg;
     font-weight: $font-weight-semibold;
     color: $gray-900;
-    margin-bottom: $spacing-6;
-    padding-bottom: $spacing-4;
+    margin-bottom: $spacing-4;
+    padding-bottom: $spacing-3;
     border-bottom: 1px solid $gray-200;
+
+    @media (min-width: $breakpoint-md) {
+      margin-bottom: $spacing-6;
+      padding-bottom: $spacing-4;
+    }
   }
 
   &--danger {
@@ -374,7 +415,11 @@ onMounted(() => {
 }
 
 .settings-form {
-  max-width: 400px;
+  max-width: 100%;
+
+  @media (min-width: $breakpoint-md) {
+    max-width: 400px;
+  }
 
   &__group {
     margin-bottom: $spacing-4;
@@ -420,26 +465,47 @@ onMounted(() => {
 
 .plan-info {
   display: flex;
-  gap: $spacing-8;
-  margin-bottom: $spacing-8;
+  flex-direction: column;
+  gap: $spacing-4;
+  margin-bottom: $spacing-6;
+
+  @media (min-width: $breakpoint-md) {
+    flex-direction: row;
+    gap: $spacing-8;
+    margin-bottom: $spacing-8;
+  }
 
   &__current {
     display: flex;
     align-items: center;
-    gap: $spacing-4;
+    gap: $spacing-3;
+
+    @media (min-width: $breakpoint-md) {
+      gap: $spacing-4;
+    }
   }
 
   &__badge {
     background: $gradient-primary;
     color: $white;
-    padding: $spacing-2 $spacing-4;
+    padding: $spacing-2 $spacing-3;
     border-radius: $radius-full;
     font-weight: $font-weight-semibold;
+    font-size: $font-size-sm;
+
+    @media (min-width: $breakpoint-md) {
+      padding: $spacing-2 $spacing-4;
+      font-size: $font-size-base;
+    }
   }
 
   &__price {
-    font-size: $font-size-lg;
+    font-size: $font-size-base;
     color: $gray-700;
+
+    @media (min-width: $breakpoint-md) {
+      font-size: $font-size-lg;
+    }
   }
 
   &__limits {
@@ -464,15 +530,27 @@ onMounted(() => {
 
 .plan-options {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr;
   gap: $spacing-4;
+
+  @media (min-width: $breakpoint-sm) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: $breakpoint-lg) {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .plan-card {
-  padding: $spacing-6;
+  padding: $spacing-4;
   border: 2px solid $gray-200;
   border-radius: $radius-xl;
   transition: all $transition-fast;
+
+  @media (min-width: $breakpoint-md) {
+    padding: $spacing-6;
+  }
 
   &--current {
     border-color: $primary;
@@ -480,19 +558,31 @@ onMounted(() => {
   }
 
   &__header {
-    margin-bottom: $spacing-4;
+    margin-bottom: $spacing-3;
+
+    @media (min-width: $breakpoint-md) {
+      margin-bottom: $spacing-4;
+    }
   }
 
   &__name {
-    font-size: $font-size-lg;
+    font-size: $font-size-base;
     font-weight: $font-weight-semibold;
     color: $gray-900;
+
+    @media (min-width: $breakpoint-md) {
+      font-size: $font-size-lg;
+    }
   }
 
   &__price {
-    font-size: $font-size-2xl;
+    font-size: $font-size-xl;
     font-weight: $font-weight-bold;
     color: $gray-900;
+
+    @media (min-width: $breakpoint-md) {
+      font-size: $font-size-2xl;
+    }
   }
 
   &__period {
@@ -503,12 +593,20 @@ onMounted(() => {
 
   &__features {
     list-style: none;
-    margin-bottom: $spacing-6;
+    margin-bottom: $spacing-4;
+
+    @media (min-width: $breakpoint-md) {
+      margin-bottom: $spacing-6;
+    }
 
     li {
       padding: $spacing-1 0;
-      font-size: $font-size-sm;
+      font-size: $font-size-xs;
       color: $gray-600;
+
+      @media (min-width: $breakpoint-md) {
+        font-size: $font-size-sm;
+      }
 
       &::before {
         content: '✓ ';
@@ -522,13 +620,20 @@ onMounted(() => {
     color: $primary;
     font-weight: $font-weight-medium;
     padding: $spacing-3;
+    font-size: $font-size-sm;
   }
 }
 
 .danger-zone {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: $spacing-4;
+
+  @media (min-width: $breakpoint-md) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
 
   &__info {
     h3 {
@@ -546,6 +651,11 @@ onMounted(() => {
 
 .btn {
   @include button-base;
+  width: 100%;
+
+  @media (min-width: $breakpoint-md) {
+    width: auto;
+  }
 
   &--primary {
     background: $gradient-primary;
