@@ -1,0 +1,108 @@
+@use 'variables' as *;
+
+// Responsive breakpoint mixin
+@mixin respond-to($breakpoint) {
+    @if $breakpoint ==sm {
+        @media (min-width: $breakpoint-sm) {
+            @content;
+        }
+    }
+
+    @else if $breakpoint ==md {
+        @media (min-width: $breakpoint-md) {
+            @content;
+        }
+    }
+
+    @else if $breakpoint ==lg {
+        @media (min-width: $breakpoint-lg) {
+            @content;
+        }
+    }
+
+    @else if $breakpoint ==xl {
+        @media (min-width: $breakpoint-xl) {
+            @content;
+        }
+    }
+}
+
+// Glassmorphism effect
+@mixin glass($opacity: 0.1) {
+    background: rgba($white, $opacity);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba($white, 0.2);
+}
+
+// Flex utilities
+@mixin flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@mixin flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+// Button base
+@mixin button-base {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-2;
+    padding: $spacing-3 $spacing-6;
+    font-family: $font-family;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    border-radius: $radius-lg;
+    border: none;
+    cursor: pointer;
+    transition: all $transition-base;
+    text-decoration: none;
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+// Card styling
+@mixin card {
+    background: $white;
+    border-radius: $radius-xl;
+    box-shadow: $shadow-md;
+    padding: $spacing-6;
+}
+
+// Input base
+@mixin input-base {
+    width: 100%;
+    padding: $spacing-3 $spacing-4;
+    font-family: $font-family;
+    font-size: $font-size-base;
+    border: 1px solid $gray-300;
+    border-radius: $radius-lg;
+    background: $white;
+    transition: all $transition-fast;
+
+    &:focus {
+        outline: none;
+        border-color: $primary;
+        box-shadow: 0 0 0 3px rgba($primary, 0.1);
+    }
+
+    &::placeholder {
+        color: $gray-400;
+    }
+}
+
+// Truncate text
+@mixin truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
