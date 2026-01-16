@@ -265,6 +265,13 @@ function copyToClipboard() {
 
   &__container {
     @include flex-between;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 $spacing-4;
+
+    @media (min-width: $breakpoint-lg) {
+      padding: 0 $spacing-6;
+    }
   }
 
   &__logo {
@@ -340,13 +347,20 @@ function copyToClipboard() {
 
 // Hero Section
 .hero {
-  min-height: 100vh;
-  padding: 120px 0 $spacing-16;
+  padding: 100px 0 $spacing-12;
   background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 50%, #fdf4ff 100%);
+
+  @media (min-width: $breakpoint-md) {
+    padding: 120px 0 $spacing-16;
+  }
 
   &__container {
     display: grid;
-    gap: $spacing-12;
+    gap: $spacing-8;
+
+    @media (min-width: $breakpoint-md) {
+      gap: $spacing-12;
+    }
 
     @include respond-to(lg) {
       grid-template-columns: 1fr 1fr;
@@ -653,13 +667,18 @@ function copyToClipboard() {
 
 // Footer
 .footer {
-  padding: $spacing-16 0 $spacing-8;
+  padding: $spacing-12 0 $spacing-8;
   background: $gray-900;
   color: $white;
 
   &__container {
     display: grid;
     gap: $spacing-8;
+
+    @media (min-width: $breakpoint-md) {
+      grid-template-columns: 1fr 2fr;
+      gap: $spacing-12;
+    }
   }
 
   &__brand {
@@ -676,7 +695,12 @@ function copyToClipboard() {
   &__links {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: $spacing-8;
+    gap: $spacing-6;
+
+    @media (min-width: $breakpoint-md) {
+      gap: $spacing-8;
+      justify-items: end;
+    }
   }
 
   &__col {
