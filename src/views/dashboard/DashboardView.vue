@@ -1,17 +1,20 @@
 <template>
   <div class="dashboard">
-    <aside class="sidebar">
+    <!-- Mobile overlay -->
+    <div v-if="sidebarOpen" class="sidebar-overlay" @click="sidebarOpen = false"></div>
+    
+    <aside class="sidebar" :class="{ 'sidebar--open': sidebarOpen }">
       <router-link to="/" class="sidebar__logo">
         <span class="sidebar__logo-icon">🔗</span>
         <span class="sidebar__logo-text">LinkSnip</span>
       </router-link>
 
       <nav class="sidebar__nav">
-        <router-link to="/dashboard" class="sidebar__link" :class="{ 'sidebar__link--active': isActive('dashboard') }">
+        <router-link to="/dashboard" class="sidebar__link" :class="{ 'sidebar__link--active': isActive('dashboard') }" @click="sidebarOpen = false">
           <span class="sidebar__link-icon">📊</span>
           Dashboard
         </router-link>
-        <router-link to="/dashboard/settings" class="sidebar__link" :class="{ 'sidebar__link--active': isActive('settings') }">
+        <router-link to="/dashboard/settings" class="sidebar__link" :class="{ 'sidebar__link--active': isActive('settings') }" @click="sidebarOpen = false">
           <span class="sidebar__link-icon">⚙️</span>
           Settings
         </router-link>
@@ -33,6 +36,9 @@
 
     <main class="main">
       <header class="header">
+        <button class="header__menu-btn" @click="sidebarOpen = !sidebarOpen">
+          ☰
+        </button>
         <h1 class="header__title">{{ pageTitle }}</h1>
       </header>
 
@@ -151,6 +157,7 @@ const plansStore = usePlansStore()
 const newUrl = reactive({ url: '', title: '' })
 const creating = ref(false)
 const copied = ref('')
+const sidebarOpen = ref(false)
 
 const userInitial = computed(() => 
   (authStore.user?.name?.[0] || authStore.user?.email?.[0] || 'U').toUpperCase()
@@ -239,12 +246,29 @@ $sidebar-width: 260px;
   @media (max-width: $breakpoint-md) {
     transform: translateX(-100%);
     transition: transform $transition-base;
-    
-    &--open {
-      transform: translateX(0);
-    }
   }
 
+  &--open {
+    transform: translateX(0);
+  }
+}
+
+.sidebar-overlay {
+  display: none;
+  
+  @media (max-width: $breakpoint-md) {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+  }
+}
+
+.sidebar {
   &__logo {
     display: flex;
     align-items: center;
@@ -366,9 +390,34 @@ $sidebar-width: 260px;
   background: $white;
   border-bottom: 1px solid $gray-200;
   padding: $spacing-4 $spacing-6;
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
 
   @media (min-width: $breakpoint-md) {
     padding: $spacing-6 $spacing-8;
+  }
+
+  &__menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: 1px solid $gray-300;
+    border-radius: $radius-md;
+    font-size: $font-size-xl;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+      background: $gray-100;
+    }
+
+    @media (min-width: $breakpoint-md) {
+      display: none;
+    }
   }
 
   &__title {

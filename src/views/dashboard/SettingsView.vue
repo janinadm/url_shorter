@@ -1,17 +1,20 @@
 <template>
   <div class="dashboard">
-    <aside class="sidebar">
+    <!-- Mobile overlay -->
+    <div v-if="sidebarOpen" class="sidebar-overlay" @click="sidebarOpen = false"></div>
+    
+    <aside class="sidebar" :class="{ 'sidebar--open': sidebarOpen }">
       <router-link to="/" class="sidebar__logo">
         <span class="sidebar__logo-icon">🔗</span>
         <span class="sidebar__logo-text">LinkSnip</span>
       </router-link>
 
       <nav class="sidebar__nav">
-        <router-link to="/dashboard" class="sidebar__link">
+        <router-link to="/dashboard" class="sidebar__link" @click="sidebarOpen = false">
           <span class="sidebar__link-icon">📊</span>
           Dashboard
         </router-link>
-        <router-link to="/dashboard/settings" class="sidebar__link sidebar__link--active">
+        <router-link to="/dashboard/settings" class="sidebar__link sidebar__link--active" @click="sidebarOpen = false">
           <span class="sidebar__link-icon">⚙️</span>
           Settings
         </router-link>
@@ -33,6 +36,9 @@
 
     <main class="main">
       <header class="header">
+        <button class="header__menu-btn" @click="sidebarOpen = !sidebarOpen">
+          ☰
+        </button>
         <h1 class="header__title">Account Settings</h1>
       </header>
 
@@ -166,6 +172,7 @@ const profile = reactive({
 })
 
 const saving = ref(false)
+const sidebarOpen = ref(false)
 const profileMessage = ref('')
 const profileSuccess = ref(false)
 
@@ -242,6 +249,27 @@ $sidebar-width: 260px;
     transition: transform $transition-base;
   }
 
+  &--open {
+    transform: translateX(0);
+  }
+}
+
+.sidebar-overlay {
+  display: none;
+  
+  @media (max-width: $breakpoint-md) {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+  }
+}
+
+.sidebar {
   &__logo {
     display: flex;
     align-items: center;
@@ -362,9 +390,34 @@ $sidebar-width: 260px;
   background: $white;
   border-bottom: 1px solid $gray-200;
   padding: $spacing-4 $spacing-6;
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
 
   @media (min-width: $breakpoint-md) {
     padding: $spacing-6 $spacing-8;
+  }
+
+  &__menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: 1px solid $gray-300;
+    border-radius: $radius-md;
+    font-size: $font-size-xl;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+      background: $gray-100;
+    }
+
+    @media (min-width: $breakpoint-md) {
+      display: none;
+    }
   }
 
   &__title {
@@ -380,7 +433,6 @@ $sidebar-width: 260px;
 
 .content {
   padding: $spacing-4;
-  max-width: 900px;
 
   @media (min-width: $breakpoint-md) {
     padding: $spacing-6;
@@ -388,6 +440,7 @@ $sidebar-width: 260px;
 
   @media (min-width: $breakpoint-lg) {
     padding: $spacing-8;
+    max-width: 1200px;
   }
 }
 

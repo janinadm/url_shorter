@@ -1,17 +1,20 @@
 <template>
   <div class="dashboard">
-    <aside class="sidebar">
+    <!-- Mobile overlay -->
+    <div v-if="sidebarOpen" class="sidebar-overlay" @click="sidebarOpen = false"></div>
+
+    <aside class="sidebar" :class="{ 'sidebar--open': sidebarOpen }">
       <router-link to="/" class="sidebar__logo">
         <span class="sidebar__logo-icon">🔗</span>
         <span class="sidebar__logo-text">LinkSnip</span>
       </router-link>
 
       <nav class="sidebar__nav">
-        <router-link to="/dashboard" class="sidebar__link">
+        <router-link to="/dashboard" class="sidebar__link" @click="sidebarOpen = false">
           <span class="sidebar__link-icon">📊</span>
           Dashboard
         </router-link>
-        <router-link to="/dashboard/settings" class="sidebar__link">
+        <router-link to="/dashboard/settings" class="sidebar__link" @click="sidebarOpen = false">
           <span class="sidebar__link-icon">⚙️</span>
           Settings
         </router-link>
@@ -26,6 +29,9 @@
 
     <main class="main">
       <header class="header">
+        <button class="header__menu-btn" @click="sidebarOpen = !sidebarOpen">
+          ☰
+        </button>
         <h1 class="header__title">Analytics</h1>
         <p v-if="url" class="header__subtitle">
           {{ url.title || url.shortCode }} • {{ baseUrl }}/r/{{ url.shortCode }}
@@ -112,6 +118,7 @@ const baseUrl = import.meta.env.VITE_BASE_URL || window.location.origin
 const lineChartRef = ref<HTMLCanvasElement | null>(null)
 const browserChartRef = ref<HTMLCanvasElement | null>(null)
 const countryChartRef = ref<HTMLCanvasElement | null>(null)
+const sidebarOpen = ref(false)
 
 let lineChart: Chart | null = null
 let browserChart: Chart | null = null
@@ -238,8 +245,7 @@ onUnmounted(() => {
 @use '@/assets/scss/mixins' as *;
 
 .dashboard {
-  display: grid;
-  grid-template-columns: 260px 1fr;
+  display: flex;
   min-height: 100vh;
 }
 
@@ -254,6 +260,16 @@ onUnmounted(() => {
   left: 0;
   bottom: 0;
   width: 260px;
+  z-index: 100;
+
+  @media (max-width: $breakpoint-md) {
+    transform: translateX(-100%);
+    transition: transform $transition-base;
+  }
+
+  &--open {
+    transform: translateX(0);
+  }
 
   &__logo {
     display: flex;
@@ -319,31 +335,99 @@ onUnmounted(() => {
   }
 }
 
+.sidebar-overlay {
+  display: none;
+  
+  @media (max-width: $breakpoint-md) {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+  }
+}
+
 .main {
+  flex: 1;
   margin-left: 260px;
   background: $gray-50;
   min-height: 100vh;
+  width: calc(100% - 260px);
+
+  @media (max-width: $breakpoint-md) {
+    margin-left: 0;
+    width: 100%;
+  }
 }
 
 .header {
   background: $white;
   border-bottom: 1px solid $gray-200;
-  padding: $spacing-6 $spacing-8;
+  padding: $spacing-4 $spacing-6;
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+
+  @media (min-width: $breakpoint-md) {
+    padding: $spacing-6 $spacing-8;
+  }
+
+  &__menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: 1px solid $gray-300;
+    border-radius: $radius-md;
+    font-size: $font-size-xl;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+      background: $gray-100;
+    }
+
+    @media (min-width: $breakpoint-md) {
+      display: none;
+    }
+  }
 
   &__title {
-    font-size: $font-size-2xl;
+    font-size: $font-size-xl;
     font-weight: $font-weight-bold;
     color: $gray-900;
+
+    @media (min-width: $breakpoint-md) {
+      font-size: $font-size-2xl;
+    }
   }
 
   &__subtitle {
     color: $gray-500;
     margin-top: $spacing-1;
+    font-size: $font-size-sm;
+    
+    @media (min-width: $breakpoint-md) {
+      font-size: $font-size-base;
+    }
   }
 }
 
 .content {
-  padding: $spacing-8;
+  padding: $spacing-4;
+  
+  @media (min-width: $breakpoint-md) {
+    padding: $spacing-8;
+  }
+
+  @media (min-width: $breakpoint-lg) {
+    max-width: 1200px;
+  }
 }
 
 .loading {
@@ -354,47 +438,82 @@ onUnmounted(() => {
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: $spacing-6;
-  margin-bottom: $spacing-8;
+  grid-template-columns: 1fr;
+  gap: $spacing-4;
+  margin-bottom: $spacing-6;
+
+  @media (min-width: $breakpoint-sm) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: $spacing-6;
+    margin-bottom: $spacing-8;
+  }
 }
 
 .stat-card {
   @include card;
   display: flex;
   align-items: center;
-  gap: $spacing-4;
+  gap: $spacing-3;
+  padding: $spacing-4;
+
+  @media (min-width: $breakpoint-md) {
+    gap: $spacing-4;
+    padding: $spacing-6;
+  }
 
   &__icon {
-    font-size: 2rem;
-    padding: $spacing-3;
+    font-size: 1.5rem;
+    padding: $spacing-2;
     background: linear-gradient(135deg, rgba($primary, 0.1) 0%, rgba($secondary, 0.1) 100%);
     border-radius: $radius-lg;
+
+    @media (min-width: $breakpoint-md) {
+      font-size: 2rem;
+      padding: $spacing-3;
+    }
   }
 
   &__value {
-    font-size: $font-size-2xl;
+    font-size: $font-size-xl;
     font-weight: $font-weight-bold;
     color: $gray-900;
+
+    @media (min-width: $breakpoint-md) {
+      font-size: $font-size-2xl;
+    }
   }
 
   &__label {
-    font-size: $font-size-sm;
+    font-size: $font-size-xs;
     color: $gray-500;
+
+    @media (min-width: $breakpoint-md) {
+      font-size: $font-size-sm;
+    }
   }
 }
 
 .charts {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: $spacing-6;
+  grid-template-columns: 1fr;
+  gap: $spacing-4;
+
+  @media (min-width: $breakpoint-lg) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-6;
+  }
 }
 
 .chart-card {
   @include card;
+  padding: $spacing-4;
+
+  @media (min-width: $breakpoint-md) {
+    padding: $spacing-6;
+  }
 
   &--wide {
-    grid-column: span 2;
+    grid-column: 1 / -1;
   }
 
   &__title {
