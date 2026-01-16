@@ -30,9 +30,10 @@ export const PLANS: Plan[] = [
 export const usePlansStore = defineStore('plans', () => {
     const authStore = useAuthStore()
 
-    const currentPlan = computed(() => {
+    const currentPlan = computed((): Plan => {
         const planId = authStore.user?.plan || 'free'
-        return PLANS.find(p => p.id === planId) || PLANS[0]
+        const found = PLANS.find(p => p.id === planId)
+        return found ?? PLANS[0]!
     })
 
     const urlLimit = computed(() => currentPlan.value.urlLimit)
@@ -43,8 +44,8 @@ export const usePlansStore = defineStore('plans', () => {
 
     function getUpgradePlan(): Plan | null {
         const current = currentPlan.value
-        if (current.id === 'free') return PLANS[1] // Pro
-        if (current.id === 'pro') return PLANS[2] // Enterprise
+        if (current.id === 'free') return PLANS[1] ?? null
+        if (current.id === 'pro') return PLANS[2] ?? null
         return null
     }
 

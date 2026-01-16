@@ -125,7 +125,14 @@ export const useUrlStore = defineStore('urls', () => {
         if (!isSupabaseConfigured) {
             const idx = urls.value.findIndex(u => u.id === id)
             if (idx !== -1) {
-                urls.value[idx] = { ...urls.value[idx], ...updates }
+                const current = urls.value[idx]
+                if (current) {
+                    urls.value[idx] = {
+                        ...current,
+                        title: updates.title ?? current.title,
+                        originalUrl: updates.originalUrl ?? current.originalUrl
+                    }
+                }
             }
             return
         }
@@ -142,7 +149,14 @@ export const useUrlStore = defineStore('urls', () => {
 
         const idx = urls.value.findIndex(u => u.id === id)
         if (idx !== -1) {
-            urls.value[idx] = { ...urls.value[idx], ...updates }
+            const current = urls.value[idx]
+            if (current) {
+                urls.value[idx] = {
+                    ...current,
+                    title: updates.title ?? current.title,
+                    originalUrl: updates.originalUrl ?? current.originalUrl
+                }
+            }
         }
     }
 
