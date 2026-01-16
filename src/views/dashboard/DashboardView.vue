@@ -106,7 +106,7 @@
             <div v-for="url in urlStore.urls" :key="url.id" class="url-card">
               <div class="url-card__main">
                 <div class="url-card__short">
-                  <span class="url-card__short-link">linksnip.io/{{ url.shortCode }}</span>
+                  <span class="url-card__short-link">{{ baseUrl }}/r/{{ url.shortCode }}</span>
                   <button @click="copyUrl(url.shortCode)" class="url-card__copy" :title="copied === url.shortCode ? 'Copied!' : 'Copy'">
                     {{ copied === url.shortCode ? '✓' : '📋' }}
                   </button>
@@ -139,6 +139,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUrlStore } from '@/stores/urls'
 import { usePlansStore } from '@/stores/plans'
+
+const baseUrl = import.meta.env.VITE_BASE_URL || window.location.origin
 
 const route = useRoute()
 const router = useRouter()
@@ -193,7 +195,7 @@ async function handleCreateUrl() {
 }
 
 function copyUrl(shortCode: string) {
-  navigator.clipboard.writeText(`https://linksnip.io/${shortCode}`)
+  navigator.clipboard.writeText(`${baseUrl}/r/${shortCode}`)
   copied.value = shortCode
   setTimeout(() => { copied.value = '' }, 2000)
 }

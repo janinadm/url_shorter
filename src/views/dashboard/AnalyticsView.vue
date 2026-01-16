@@ -28,7 +28,7 @@
       <header class="header">
         <h1 class="header__title">Analytics</h1>
         <p v-if="url" class="header__subtitle">
-          {{ url.title || url.shortCode }} • linksnip.io/{{ url.shortCode }}
+          {{ url.title || url.shortCode }} • {{ baseUrl }}/r/{{ url.shortCode }}
         </p>
       </header>
 
@@ -106,6 +106,8 @@ const route = useRoute()
 const router = useRouter()
 const urlStore = useUrlStore()
 const analyticsStore = useAnalyticsStore()
+
+const baseUrl = import.meta.env.VITE_BASE_URL || window.location.origin
 
 const lineChartRef = ref<HTMLCanvasElement | null>(null)
 const browserChartRef = ref<HTMLCanvasElement | null>(null)

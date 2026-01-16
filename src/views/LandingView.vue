@@ -227,6 +227,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+const baseUrl = import.meta.env.VITE_BASE_URL || window.location.origin
 const demoUrl = ref('')
 const shortenedUrl = ref('')
 const copied = ref(false)
@@ -239,11 +240,11 @@ function shortenDemo() {
   for (let i = 0; i < 6; i++) {
     code += chars.charAt(Math.floor(Math.random() * chars.length))
   }
-  shortenedUrl.value = `linksnip.io/${code}`
+  shortenedUrl.value = `${baseUrl}/r/${code}`
 }
 
 function copyToClipboard() {
-  navigator.clipboard.writeText(`https://${shortenedUrl.value}`)
+  navigator.clipboard.writeText(shortenedUrl.value)
   copied.value = true
   setTimeout(() => { copied.value = false }, 2000)
 }
