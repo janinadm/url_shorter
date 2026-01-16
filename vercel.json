@@ -3,6 +3,10 @@
         {
             "source": "/r/:code",
             "destination": "/api/r/:code"
+        },
+        {
+            "source": "/((?!api/).*)",
+            "destination": "/index.html"
         }
     ]
 }
