@@ -177,7 +177,7 @@ function isActive(page: string): boolean {
 
 async function handleLogout() {
   await authStore.signOut()
-  router.push('/login')
+  router.push('/')
 }
 
 async function handleCreateUrl() {
@@ -213,9 +213,10 @@ onMounted(() => {
 @use '@/assets/scss/variables' as *;
 @use '@/assets/scss/mixins' as *;
 
+$sidebar-width: 260px;
+
 .dashboard {
-  display: grid;
-  grid-template-columns: 260px 1fr;
+  display: flex;
   min-height: 100vh;
 }
 
@@ -230,7 +231,17 @@ onMounted(() => {
   top: 0;
   left: 0;
   bottom: 0;
-  width: 260px;
+  width: $sidebar-width;
+  z-index: 100;
+
+  @media (max-width: $breakpoint-md) {
+    transform: translateX(-100%);
+    transition: transform $transition-base;
+    
+    &--open {
+      transform: translateX(0);
+    }
+  }
 
   &__logo {
     display: flex;
@@ -294,16 +305,22 @@ onMounted(() => {
     @include flex-center;
     width: 40px;
     height: 40px;
+    flex-shrink: 0;
     background: $gradient-primary;
     color: $white;
     font-weight: $font-weight-bold;
     border-radius: $radius-full;
   }
 
+  &__user-info {
+    min-width: 0;
+  }
+
   &__user-name {
     font-weight: $font-weight-medium;
     color: $gray-900;
     font-size: $font-size-sm;
+    @include truncate;
   }
 
   &__user-plan {
@@ -331,33 +348,66 @@ onMounted(() => {
 
 // Main Content
 .main {
-  margin-left: 260px;
+  flex: 1;
+  margin-left: $sidebar-width;
   background: $gray-50;
   min-height: 100vh;
+  width: calc(100% - #{$sidebar-width});
+
+  @media (max-width: $breakpoint-md) {
+    margin-left: 0;
+    width: 100%;
+  }
 }
 
 .header {
   background: $white;
   border-bottom: 1px solid $gray-200;
-  padding: $spacing-6 $spacing-8;
+  padding: $spacing-4 $spacing-6;
+
+  @media (min-width: $breakpoint-md) {
+    padding: $spacing-6 $spacing-8;
+  }
 
   &__title {
-    font-size: $font-size-2xl;
+    font-size: $font-size-xl;
     font-weight: $font-weight-bold;
     color: $gray-900;
+
+    @media (min-width: $breakpoint-md) {
+      font-size: $font-size-2xl;
+    }
   }
 }
 
 .content {
-  padding: $spacing-8;
+  padding: $spacing-4;
+
+  @media (min-width: $breakpoint-md) {
+    padding: $spacing-6;
+  }
+
+  @media (min-width: $breakpoint-lg) {
+    padding: $spacing-8;
+  }
 }
 
 // Stats
 .stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: $spacing-6;
-  margin-bottom: $spacing-8;
+  grid-template-columns: 1fr;
+  gap: $spacing-4;
+  margin-bottom: $spacing-6;
+
+  @media (min-width: $breakpoint-sm) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: $breakpoint-lg) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: $spacing-6;
+    margin-bottom: $spacing-8;
+  }
 }
 
 .stat-card {
@@ -367,28 +417,46 @@ onMounted(() => {
   gap: $spacing-4;
 
   &__icon {
-    font-size: 2rem;
+    font-size: 1.5rem;
     padding: $spacing-3;
     background: linear-gradient(135deg, rgba($primary, 0.1) 0%, rgba($secondary, 0.1) 100%);
     border-radius: $radius-lg;
+    flex-shrink: 0;
+
+    @media (min-width: $breakpoint-md) {
+      font-size: 2rem;
+    }
+  }
+
+  &__content {
+    min-width: 0;
   }
 
   &__value {
-    font-size: $font-size-2xl;
+    font-size: $font-size-xl;
     font-weight: $font-weight-bold;
     color: $gray-900;
+
+    @media (min-width: $breakpoint-md) {
+      font-size: $font-size-2xl;
+    }
   }
 
   &__label {
     font-size: $font-size-sm;
     color: $gray-500;
+    white-space: nowrap;
   }
 }
 
 // Create URL
 .create-url {
   @include card;
-  margin-bottom: $spacing-8;
+  margin-bottom: $spacing-6;
+
+  @media (min-width: $breakpoint-lg) {
+    margin-bottom: $spacing-8;
+  }
 
   &__title {
     font-size: $font-size-lg;
@@ -399,17 +467,28 @@ onMounted(() => {
 
   &__form {
     display: flex;
+    flex-direction: column;
     gap: $spacing-3;
-    flex-wrap: wrap;
+
+    @media (min-width: $breakpoint-md) {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
   }
 
   &__input {
     @include input-base;
-    flex: 2;
-    min-width: 200px;
+    
+    @media (min-width: $breakpoint-md) {
+      flex: 2;
+      min-width: 200px;
+    }
 
     &--title {
-      flex: 1;
+      @media (min-width: $breakpoint-md) {
+        flex: 1;
+        min-width: 150px;
+      }
     }
   }
 
@@ -436,8 +515,12 @@ onMounted(() => {
   &__loading,
   &__empty {
     text-align: center;
-    padding: $spacing-12;
+    padding: $spacing-8;
     color: $gray-500;
+
+    @media (min-width: $breakpoint-md) {
+      padding: $spacing-12;
+    }
   }
 
   &__items {
@@ -449,8 +532,16 @@ onMounted(() => {
 
 .url-card {
   @include card;
-  @include flex-between;
-  gap: $spacing-4;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+
+  @media (min-width: $breakpoint-md) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-4;
+  }
 
   &__main {
     flex: 1;
@@ -466,9 +557,13 @@ onMounted(() => {
 
   &__short-link {
     font-family: monospace;
-    font-size: $font-size-base;
+    font-size: $font-size-sm;
     color: $primary;
     font-weight: $font-weight-medium;
+
+    @media (min-width: $breakpoint-md) {
+      font-size: $font-size-base;
+    }
   }
 
   &__copy {
@@ -478,6 +573,7 @@ onMounted(() => {
     font-size: $font-size-base;
     padding: $spacing-1;
     opacity: 0.7;
+    flex-shrink: 0;
 
     &:hover {
       opacity: 1;
@@ -499,15 +595,26 @@ onMounted(() => {
 
   &__stats {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: $spacing-2;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-4;
+    padding-top: $spacing-3;
+    border-top: 1px solid $gray-100;
+
+    @media (min-width: $breakpoint-md) {
+      flex-direction: column;
+      align-items: flex-end;
+      gap: $spacing-2;
+      padding-top: 0;
+      border-top: none;
+    }
   }
 
   &__clicks {
     font-size: $font-size-sm;
     color: $gray-600;
     font-weight: $font-weight-medium;
+    white-space: nowrap;
   }
 
   &__actions {
@@ -536,6 +643,11 @@ onMounted(() => {
 
 .btn {
   @include button-base;
+  width: 100%;
+
+  @media (min-width: $breakpoint-md) {
+    width: auto;
+  }
 
   &--primary {
     background: $gradient-primary;
