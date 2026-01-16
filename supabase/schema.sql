@@ -60,10 +60,10 @@ create policy "Users can update own profile"
   on public.profiles for update
   using (auth.uid() = id);
 
--- URLs: Users can only manage their own URLs
-create policy "Users can view own URLs"
+-- URLs: Public read for redirects, users manage their own
+create policy "Anyone can read URLs for redirect"
   on public.urls for select
-  using (auth.uid() = user_id);
+  using (true);
 
 create policy "Users can create own URLs"
   on public.urls for insert

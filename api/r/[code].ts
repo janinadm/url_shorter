@@ -30,7 +30,7 @@ export default async function handler(request: Request) {
         .single()
 
     if (urlError || !urlData) {
-        return new Response('Link not found', { status: 404 })
+        return new Response(`Link not found: ${shortCode}`, { status: 404 })
     }
 
     // Get browser and country info from headers
@@ -50,17 +50,21 @@ export default async function handler(request: Request) {
         browser = 'Edge'
     }
 
-    // Record the click (don't await to avoid slowing redirect)
-    supabase
-        .from('clicks')
-        .insert({
-            url_id: urlData.id,
-            browser,
-            country,
-            referer,
-            user_agent: userAgent.substring(0, 500),
-        })
-        .then(() => { })
+    // Record the click - MUST await to ensure it completes before redirect
+    try {
+        await supabase
+            .from('clicks')
+            .insert({
+                url_id: urlData.id,
+                browser,
+                country,
+                referer,
+                user_agent: userAgent.substring(0, 500),
+            })
+    } catch (e) {
+        // Log but don't block redirect
+        console.error('Failed to record click:', e)
+    }
 
     // Redirect to original URL
     return Response.redirect(urlData.original_url, 302)
