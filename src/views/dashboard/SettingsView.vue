@@ -440,7 +440,6 @@ $sidebar-width: 260px;
 
   @media (min-width: $breakpoint-lg) {
     padding: $spacing-8;
-    max-width: 1200px;
   }
 }
 

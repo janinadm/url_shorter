@@ -424,10 +424,6 @@ onUnmounted(() => {
   @media (min-width: $breakpoint-md) {
     padding: $spacing-8;
   }
-
-  @media (min-width: $breakpoint-lg) {
-    max-width: 1200px;
-  }
 }
 
 .loading {
