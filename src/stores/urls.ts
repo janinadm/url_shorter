@@ -95,7 +95,8 @@ export const useUrlStore = defineStore('urls', () => {
             return newUrl
         }
 
-        const { data, error } = await supabase
+        // Insert into Supabase
+        const { error: insertError } = await supabase
             .from('urls')
             .insert({
                 user_id: authStore.user.id,
@@ -103,10 +104,17 @@ export const useUrlStore = defineStore('urls', () => {
                 original_url: originalUrl,
                 title
             })
-            .select()
+
+        if (insertError) throw insertError
+
+        // Fetch the created record
+        const { data, error: selectError } = await supabase
+            .from('urls')
+            .select('*')
+            .eq('short_code', shortCode)
             .single()
 
-        if (error) throw error
+        if (selectError) throw selectError
 
         const newUrl: ShortUrl = {
             id: data.id,

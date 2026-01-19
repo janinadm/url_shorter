@@ -146,6 +146,9 @@ function goBack() {
 function createCharts() {
   if (!analytics.value) return
 
+  // Always destroy existing charts before creating new ones
+  destroyCharts()
+
   // Line chart - Clicks over time
   if (lineChartRef.value) {
     lineChart = new Chart(lineChartRef.value, {
@@ -233,7 +236,6 @@ function destroyCharts() {
 }
 
 watch(analytics, () => {
-  destroyCharts()
   setTimeout(createCharts, 100)
 })
 
