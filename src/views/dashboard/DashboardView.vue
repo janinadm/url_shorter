@@ -126,7 +126,7 @@
                   <router-link :to="`/dashboard/analytics/${url.id}`" class="url-card__action">
                     📊
                   </router-link>
-                  <button @click="deleteUrl(url.id)" class="url-card__action url-card__action--delete">
+                  <button @click="confirmDeleteUrl(url.id)" class="url-card__action url-card__action--delete">
                     🗑️
                   </button>
                 </div>
@@ -136,6 +136,18 @@
         </div>
       </div>
     </main>
+
+    <!-- Delete Confirmation Dialog -->
+    <ConfirmDialog
+      v-model="deleteDialog.open"
+      title="Delete Link"
+      message="Are you sure you want to delete this link? This action cannot be undone."
+      confirm-text="Delete"
+      cancel-text="Cancel"
+      variant="danger"
+      :loading="deleteDialog.loading"
+      @confirm="handleDeleteConfirm"
+    />
   </div>
 </template>
 
@@ -145,6 +157,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUrlStore } from '@/stores/urls'
 import { usePlansStore } from '@/stores/plans'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const baseUrl = import.meta.env.VITE_BASE_URL || window.location.origin
 
@@ -158,6 +171,13 @@ const newUrl = reactive({ url: '', title: '' })
 const creating = ref(false)
 const copied = ref('')
 const sidebarOpen = ref(false)
+
+// Delete dialog state
+const deleteDialog = reactive({
+  open: false,
+  loading: false,
+  urlId: ''
+})
 
 const userInitial = computed(() => 
   (authStore.user?.name?.[0] || authStore.user?.email?.[0] || 'U').toUpperCase()
@@ -207,9 +227,19 @@ function copyUrl(shortCode: string) {
   setTimeout(() => { copied.value = '' }, 2000)
 }
 
-async function deleteUrl(id: string) {
-  if (confirm('Are you sure you want to delete this link?')) {
-    await urlStore.deleteUrl(id)
+function confirmDeleteUrl(id: string) {
+  deleteDialog.urlId = id
+  deleteDialog.open = true
+}
+
+async function handleDeleteConfirm() {
+  deleteDialog.loading = true
+  try {
+    await urlStore.deleteUrl(deleteDialog.urlId)
+    deleteDialog.open = false
+  } finally {
+    deleteDialog.loading = false
+    deleteDialog.urlId = ''
   }
 }
 
