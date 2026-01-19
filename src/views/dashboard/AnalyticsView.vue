@@ -4,7 +4,7 @@
     <div v-if="sidebarOpen" class="sidebar-overlay" @click="sidebarOpen = false"></div>
 
     <aside class="sidebar" :class="{ 'sidebar--open': sidebarOpen }">
-      <router-link to="/" class="sidebar__logo">
+      <router-link to="/dashboard" class="sidebar__logo">
         <span class="sidebar__logo-icon">🔗</span>
         <span class="sidebar__logo-text">LinkSnip</span>
       </router-link>
