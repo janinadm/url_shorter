@@ -107,6 +107,29 @@ export const useAuthStore = defineStore('auth', () => {
         if (updates.name) user.value.name = updates.name
     }
 
+    async function deleteAccount() {
+        if (!user.value) throw new Error('No user logged in')
+
+        // Delete user's URLs first (cascade should handle clicks)
+        const { error: urlError } = await supabase
+            .from('urls')
+            .delete()
+            .eq('user_id', user.value.id)
+
+        if (urlError) throw urlError
+
+        // Delete profile
+        const { error: profileError } = await supabase
+            .from('profiles')
+            .delete()
+            .eq('id', user.value.id)
+
+        if (profileError) throw profileError
+
+        // Sign out (the auth.users record will remain but profile is gone)
+        await signOut()
+    }
+
     return {
         user,
         loading,
@@ -118,6 +141,7 @@ export const useAuthStore = defineStore('auth', () => {
         signOut,
         resetPassword,
         updateProfile,
+        deleteAccount,
         fetchProfile
     }
 })

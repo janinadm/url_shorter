@@ -83,10 +83,8 @@
               <div class="plan-info__badge">
                 {{ plansStore.currentPlan.name }}
               </div>
-              <p class="plan-info__price">
-                <span v-if="plansStore.currentPlan.price === 0">Free</span>
-                <span v-else-if="plansStore.currentPlan.price === -1">Custom pricing</span>
-                <span v-else>${{ plansStore.currentPlan.price }}/month</span>
+              <p class="plan-info__usage">
+                {{ urlStore.totalUrls }} / {{ plansStore.urlLimit === Infinity ? '∞' : plansStore.urlLimit }} links used
               </p>
             </div>
             <div class="plan-info__limits">
@@ -145,13 +143,25 @@
               <h3>Delete Account</h3>
               <p>Once deleted, your account and all data cannot be recovered.</p>
             </div>
-            <button class="btn btn--danger" disabled>
+            <button class="btn btn--danger" @click="showDeleteAccountDialog = true">
               Delete Account
             </button>
           </div>
         </section>
       </div>
     </main>
+
+    <!-- Delete Account Confirmation Dialog -->
+    <ConfirmDialog
+      v-model="showDeleteAccountDialog"
+      title="Delete Account"
+      message="This will permanently delete your account and all your links. This action cannot be undone. Are you absolutely sure?"
+      confirm-text="Delete My Account"
+      cancel-text="Cancel"
+      variant="danger"
+      :loading="deletingAccount"
+      @confirm="handleDeleteAccount"
+    />
   </div>
 </template>
 
@@ -161,6 +171,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUrlStore } from '@/stores/urls'
 import { usePlansStore } from '@/stores/plans'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -175,6 +186,8 @@ const saving = ref(false)
 const sidebarOpen = ref(false)
 const profileMessage = ref('')
 const profileSuccess = ref(false)
+const showDeleteAccountDialog = ref(false)
+const deletingAccount = ref(false)
 
 const userInitial = computed(() =>
   (authStore.user?.name?.[0] || authStore.user?.email?.[0] || 'U').toUpperCase()
@@ -211,6 +224,20 @@ function selectPlan(planId: string) {
   } else if (planId === 'pro') {
     // In production, redirect to Stripe Checkout
     alert('Stripe integration would redirect to payment here. For demo, plan change is simulated.')
+  }
+}
+
+async function handleDeleteAccount() {
+  deletingAccount.value = true
+  try {
+    await authStore.deleteAccount()
+    router.push('/')
+  } catch (e) {
+    console.error('Failed to delete account:', e)
+    alert('Failed to delete account. Please try again.')
+  } finally {
+    deletingAccount.value = false
+    showDeleteAccountDialog.value = false
   }
 }
 
