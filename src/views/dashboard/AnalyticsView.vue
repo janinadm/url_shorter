@@ -218,9 +218,18 @@ function createCharts() {
 }
 
 function destroyCharts() {
-  lineChart?.destroy()
-  browserChart?.destroy()
-  countryChart?.destroy()
+  if (lineChart) {
+    lineChart.destroy()
+    lineChart = null
+  }
+  if (browserChart) {
+    browserChart.destroy()
+    browserChart = null
+  }
+  if (countryChart) {
+    countryChart.destroy()
+    countryChart = null
+  }
 }
 
 watch(analytics, () => {

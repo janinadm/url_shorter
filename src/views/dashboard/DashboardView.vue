@@ -216,6 +216,9 @@ async function handleCreateUrl() {
     await urlStore.createUrl(newUrl.url, newUrl.title || undefined)
     newUrl.url = ''
     newUrl.title = ''
+  } catch (e) {
+    console.error('Failed to create URL:', e)
+    alert('Failed to create link. Please try again.')
   } finally {
     creating.value = false
   }
