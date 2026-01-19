@@ -222,8 +222,14 @@ function selectPlan(planId: string) {
   if (planId === 'enterprise') {
     window.location.href = 'mailto:sales@linksnip.io'
   } else if (planId === 'pro') {
-    // In production, redirect to Stripe Checkout
-    alert('Stripe integration would redirect to payment here. For demo, plan change is simulated.')
+    const stripeCheckoutUrl = import.meta.env.VITE_STRIPE_CHECKOUT_URL
+    if (stripeCheckoutUrl) {
+      // Redirect to Stripe Checkout with user email prefilled
+      const email = authStore.user?.email || ''
+      window.location.href = `${stripeCheckoutUrl}?prefilled_email=${encodeURIComponent(email)}`
+    } else {
+      alert('Stripe checkout is not configured. Please set VITE_STRIPE_CHECKOUT_URL in your environment.')
+    }
   }
 }
 
