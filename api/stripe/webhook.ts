@@ -17,6 +17,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const sig = req.headers['stripe-signature'] as string
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || ''
 
+    // Log environment status for debugging
+    console.log('Webhook called. Env check:', {
+        hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
+        hasWebhookSecret: !!webhookSecret,
+        hasSupabaseUrl: !!process.env.VITE_SUPABASE_URL,
+        hasServiceRoleKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+    })
+
     let event: Stripe.Event
 
     try {
@@ -28,25 +36,41 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'Webhook signature verification failed' })
     }
 
+    console.log('Webhook event received:', event.type)
+
     // Handle the checkout.session.completed event
     if (event.type === 'checkout.session.completed') {
         const session = event.data.object as Stripe.Checkout.Session
 
-        console.log('Checkout completed for:', session.customer_email)
+        // Get email from either customer_email or customer_details
+        const customerEmail = session.customer_email || session.customer_details?.email
+
+        console.log('Checkout completed. Session data:', {
+            customer_email: session.customer_email,
+            customer_details_email: session.customer_details?.email,
+            resolved_email: customerEmail
+        })
 
         // Update user's plan in Supabase
-        if (session.customer_email) {
-            const { error } = await supabase
+        if (customerEmail) {
+            const { data, error } = await supabase
                 .from('profiles')
                 .update({ plan: 'pro' })
-                .eq('email', session.customer_email)
+                .eq('email', customerEmail)
+                .select()
 
             if (error) {
                 console.error('Failed to update plan:', error)
                 return res.status(500).json({ error: 'Failed to update plan' })
             }
 
-            console.log('Plan upgraded to pro for:', session.customer_email)
+            console.log('Plan upgrade result:', { updatedRows: data?.length, email: customerEmail })
+
+            if (!data || data.length === 0) {
+                console.warn('No profile found with email:', customerEmail)
+            }
+        } else {
+            console.error('No customer email found in session')
         }
     }
 
