@@ -76,6 +76,7 @@ function handleCancel() {
 </script>
 
 <style lang="scss" scoped>
+@use 'sass:color';
 @use '@/assets/scss/variables' as *;
 
 .modal-overlay {
@@ -156,7 +157,7 @@ function handleCancel() {
     color: $white;
 
     &:hover:not(:disabled) {
-      background: darken($primary, 10%);
+      background: color.adjust($primary, $lightness: -10%);
     }
   }
 
@@ -175,7 +176,7 @@ function handleCancel() {
     color: $white;
 
     &:hover:not(:disabled) {
-      background: darken($error, 10%);
+      background: color.adjust($error, $lightness: -10%);
     }
   }
 
