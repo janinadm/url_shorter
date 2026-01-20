@@ -267,6 +267,8 @@ onMounted(async () => {
   // Check for Stripe success redirect
   if (route.query.success === 'true') {
     upgradeSuccess.value = true
+    // Wait for webhook to process (Stripe webhooks are async)
+    await new Promise(resolve => setTimeout(resolve, 3000))
     // Refresh profile to get updated plan
     if (authStore.user) {
       await authStore.fetchProfile(authStore.user.id)
