@@ -75,6 +75,16 @@
           </form>
         </section>
 
+        <!-- Upgrade Success Banner -->
+        <div v-if="upgradeSuccess" class="success-banner">
+          <span class="success-banner__icon">🎉</span>
+          <div class="success-banner__content">
+            <strong>Upgrade Successful!</strong>
+            <p>You're now on the Pro plan. Enjoy your new features!</p>
+          </div>
+          <button @click="upgradeSuccess = false" class="success-banner__close">×</button>
+        </div>
+
         <!-- Plan Section -->
         <section class="settings-section">
           <h2 class="settings-section__title">Your Plan</h2>
@@ -167,11 +177,13 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUrlStore } from '@/stores/urls'
 import { usePlansStore } from '@/stores/plans'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+
+const route = useRoute()
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -188,6 +200,7 @@ const profileMessage = ref('')
 const profileSuccess = ref(false)
 const showDeleteAccountDialog = ref(false)
 const deletingAccount = ref(false)
+const upgradeSuccess = ref(false)
 
 const userInitial = computed(() =>
   (authStore.user?.name?.[0] || authStore.user?.email?.[0] || 'U').toUpperCase()
@@ -247,9 +260,20 @@ async function handleDeleteAccount() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   profile.name = authStore.user?.name || ''
   urlStore.fetchUrls()
+  
+  // Check for Stripe success redirect
+  if (route.query.success === 'true') {
+    upgradeSuccess.value = true
+    // Refresh profile to get updated plan
+    if (authStore.user) {
+      await authStore.fetchProfile(authStore.user.id)
+    }
+    // Clean URL
+    router.replace({ query: {} })
+  }
 })
 </script>
 
@@ -769,6 +793,51 @@ $sidebar-width: 260px;
 
     &:disabled {
       opacity: 0.5;
+    }
+  }
+}
+
+.success-banner {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  padding: $spacing-4 $spacing-6;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: $radius-lg;
+  margin-bottom: $spacing-6;
+  color: $white;
+
+  &__icon {
+    font-size: 1.5rem;
+  }
+
+  &__content {
+    flex: 1;
+
+    strong {
+      display: block;
+      font-size: $font-size-lg;
+      margin-bottom: $spacing-1;
+    }
+
+    p {
+      margin: 0;
+      opacity: 0.9;
+      font-size: $font-size-sm;
+    }
+  }
+
+  &__close {
+    background: transparent;
+    border: none;
+    color: $white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity $transition-fast;
+
+    &:hover {
+      opacity: 1;
     }
   }
 }
