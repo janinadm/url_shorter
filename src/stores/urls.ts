@@ -95,27 +95,44 @@ export const useUrlStore = defineStore('urls', () => {
             return newUrl
         }
 
-        // Insert into Supabase
-        const { error: insertError } = await supabase
+        // Helper for timeout
+        const timeout = <T>(ms: number, promise: Promise<T>): Promise<T> => {
+            return Promise.race([
+                promise,
+                new Promise<never>((_, reject) =>
+                    setTimeout(() => reject(new Error('Request timeout')), ms)
+                )
+            ])
+        }
+
+        // Insert into Supabase with timeout
+        const insertResult = await timeout(10000, Promise.resolve(supabase
             .from('urls')
             .insert({
                 user_id: authStore.user.id,
                 short_code: shortCode,
                 original_url: originalUrl,
                 title
-            })
+            })))
 
-        if (insertError) throw insertError
+        if (insertResult.error) {
+            console.error('URL insert error:', insertResult.error)
+            throw insertResult.error
+        }
 
-        // Fetch the created record
-        const { data, error: selectError } = await supabase
+        // Fetch the created record with timeout
+        const selectResult = await timeout(10000, Promise.resolve(supabase
             .from('urls')
             .select('*')
             .eq('short_code', shortCode)
-            .single()
+            .single()))
 
-        if (selectError) throw selectError
+        if (selectResult.error) {
+            console.error('URL select error:', selectResult.error)
+            throw selectResult.error
+        }
 
+        const data = selectResult.data
         const newUrl: ShortUrl = {
             id: data.id,
             userId: data.user_id,
