@@ -110,24 +110,22 @@ export const useAuthStore = defineStore('auth', () => {
     async function deleteAccount() {
         if (!user.value) throw new Error('No user logged in')
 
-        // Delete user's URLs first (cascade should handle clicks)
-        const { error: urlError } = await supabase
-            .from('urls')
-            .delete()
-            .eq('user_id', user.value.id)
+        // Call server-side API to fully delete user (including from auth.users)
+        const response = await fetch('/api/account/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ userId: user.value.id })
+        })
 
-        if (urlError) throw urlError
+        if (!response.ok) {
+            const error = await response.json()
+            throw new Error(error.details || 'Failed to delete account')
+        }
 
-        // Delete profile
-        const { error: profileError } = await supabase
-            .from('profiles')
-            .delete()
-            .eq('id', user.value.id)
-
-        if (profileError) throw profileError
-
-        // Sign out (the auth.users record will remain but profile is gone)
-        await signOut()
+        // Clear local state and sign out
+        user.value = null
     }
 
     return {
