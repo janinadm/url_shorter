@@ -73,15 +73,14 @@ export const useUrlStore = defineStore('urls', () => {
         const authStore = useAuthStore()
         if (!authStore.user) return null
 
-        // Generate short code
+        // Generate random 6-character short code
         const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
-        let shortCode = ''
-        for (let i = 0; i < 6; i++) {
-            shortCode += chars.charAt(Math.floor(Math.random() * chars.length))
-        }
+        const shortCode = Array.from({ length: 6 }, () =>
+            chars.charAt(Math.floor(Math.random() * chars.length))
+        ).join('')
 
+        // Use mock data in dev mode
         if (!isSupabaseConfigured) {
-            // Mock create in dev mode
             const newUrl: ShortUrl = {
                 id: Date.now().toString(),
                 userId: authStore.user.id,
@@ -95,48 +94,45 @@ export const useUrlStore = defineStore('urls', () => {
             return newUrl
         }
 
-        // Helper for timeout protection
-        const timeout = <T>(ms: number, promise: Promise<T>): Promise<T> => {
-            return Promise.race([
-                promise,
-                new Promise<never>((_, reject) =>
-                    setTimeout(() => reject(new Error('Request timeout')), ms)
-                )
-            ])
+        // Get access token from localStorage (bypasses Supabase client blocking issues)
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
+        const projectRef = supabaseUrl.split('//')[1]?.split('.')[0] || ''
+        const storageKey = `sb-${projectRef}-auth-token`
+        const storedSession = localStorage.getItem(storageKey)
+
+        if (!storedSession) {
+            throw new Error('Session not found. Please sign in again.')
         }
 
-        // Refresh session to prevent stale token issues
-        const { data: sessionData, error: sessionError } = await timeout(
-            5000,
-            Promise.resolve(supabase.auth.refreshSession())
-        )
-
-        if (sessionError || !sessionData.session) {
-            throw new Error('Session expired. Please sign in again.')
+        const { access_token: accessToken } = JSON.parse(storedSession)
+        if (!accessToken) {
+            throw new Error('No access token. Please sign in again.')
         }
 
-        // Insert into Supabase with timeout protection
-        const insertResult = await timeout(15000, Promise.resolve(supabase
-            .from('urls')
-            .insert({
+        // Insert URL using raw fetch (bypasses Supabase client blocking issues)
+        const insertResponse = await fetch(`${supabaseUrl}/rest/v1/urls`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${accessToken}`,
+                'Prefer': 'return=representation'
+            },
+            body: JSON.stringify({
                 user_id: authStore.user.id,
                 short_code: shortCode,
                 original_url: originalUrl,
-                title
-            })))
+                title: title || null
+            })
+        })
 
-        if (insertResult.error) throw insertResult.error
+        if (!insertResponse.ok) {
+            const error = await insertResponse.json()
+            throw new Error(error.message || 'Failed to create URL')
+        }
 
-        // Fetch the created record with timeout protection
-        const selectResult = await timeout(15000, Promise.resolve(supabase
-            .from('urls')
-            .select('*')
-            .eq('short_code', shortCode)
-            .single()))
+        const [data] = await insertResponse.json()
 
-        if (selectResult.error) throw selectResult.error
-
-        const data = selectResult.data
         const newUrl: ShortUrl = {
             id: data.id,
             userId: data.user_id,
