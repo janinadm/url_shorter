@@ -105,6 +105,16 @@ export const useUrlStore = defineStore('urls', () => {
             ])
         }
 
+        // Refresh session to prevent stale token issues
+        const { data: sessionData, error: sessionError } = await timeout(
+            5000,
+            Promise.resolve(supabase.auth.refreshSession())
+        )
+
+        if (sessionError || !sessionData.session) {
+            throw new Error('Session expired. Please sign in again.')
+        }
+
         // Insert into Supabase with timeout protection
         const insertResult = await timeout(15000, Promise.resolve(supabase
             .from('urls')
