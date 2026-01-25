@@ -135,8 +135,13 @@ export const useUrlStore = defineStore('urls', () => {
                 const isExpired = existing.expires_at && new Date(existing.expires_at) < new Date()
 
                 if (isExpired) {
-                    // Reclamation: Delete expired link to free up the alias
-                    await supabase.from('urls').delete().eq('id', existing.id)
+                    // Reclamation: Call secure RPC to delete expired link
+                    const { error: claimError } = await supabase
+                        .rpc('claim_expired_alias', { target_short_code: shortCode })
+
+                    if (claimError) {
+                        throw new Error('Failed to claim expired alias. Please try again.')
+                    }
                 } else {
                     // Active link - cannot take it
                     throw new Error(`Custom alias '${shortCode}' is already taken. Please choose another one.`)

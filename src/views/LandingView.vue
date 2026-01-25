@@ -58,8 +58,9 @@
                   {{ copied ? '✓' : '📋' }}
                 </button>
               </div>
-              <p class="demo-card__hint">Sign up to save your links and track clicks!</p>
+              <p class="demo-card__hint">Link expires in 30 minutes. Sign up to keep it!</p>
             </div>
+            <p v-if="message" class="demo-card__message">{{ message }}</p>
           </div>
         </div>
       </div>
@@ -226,21 +227,31 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { supabase } from '@/lib/supabase'
 
 const baseUrl = import.meta.env.VITE_BASE_URL || window.location.origin
 const demoUrl = ref('')
 const shortenedUrl = ref('')
 const copied = ref(false)
+const message = ref('')
 
-function shortenDemo() {
+async function shortenDemo() {
   if (!demoUrl.value) return
-  // Generate a fake short code for demo
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
-  let code = ''
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length))
+  message.value = 'Creating temporary link...'
+  shortenedUrl.value = ''
+  
+  try {
+    const { data: code, error } = await supabase.rpc('create_demo_link', { target_url: demoUrl.value })
+    
+    if (error) throw error
+    if (code) {
+      shortenedUrl.value = `${baseUrl}/r/${code}`
+      message.value = ''
+    }
+  } catch (e) {
+    console.error(e)
+    message.value = 'Failed to create link. Please try again.'
   }
-  shortenedUrl.value = `${baseUrl}/r/${code}`
 }
 
 function copyToClipboard() {
@@ -484,6 +495,13 @@ function copyToClipboard() {
     margin-top: $spacing-3;
     font-size: $font-size-sm;
     color: $gray-500;
+    text-align: center;
+  }
+
+  &__message {
+    margin-top: $spacing-3;
+    font-size: $font-size-sm;
+    color: $primary;
     text-align: center;
   }
 }
