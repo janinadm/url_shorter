@@ -91,7 +91,7 @@
                 type="text"
                 placeholder="Custom alias (optional)"
                 class="create-url__input create-url__input--alias"
-                pattern="[a-zA-Z0-9-]+"
+                pattern="^[a-zA-Z0-9-]+$"
                 minlength="3"
                 maxlength="20"
                 title="3-20 characters, alphanumeric and hyphens only"
