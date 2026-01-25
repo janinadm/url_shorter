@@ -13,6 +13,7 @@ export interface ShortUrl {
   shortCode: string
   originalUrl: string
   title?: string
+  expiresAt?: string  // null = permanent (Pro), date = expires (Free)
   createdAt: string
   clicks?: number
 }

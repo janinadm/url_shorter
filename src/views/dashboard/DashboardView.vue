@@ -85,6 +85,19 @@
               placeholder="Title (optional)"
               class="create-url__input create-url__input--title"
             />
+            <div class="create-url__row">
+              <div class="create-url__prefix">{{ baseUrl }}/r/</div>
+              <input
+                v-model="newUrl.customAlias"
+                type="text"
+                placeholder="Custom alias (optional)"
+                class="create-url__input create-url__input--alias"
+                pattern="[a-zA-Z0-9-]+"
+                minlength="3"
+                maxlength="20"
+                title="3-20 characters, alphanumeric and hyphens only"
+              />
+            </div>
             <button 
               type="submit" 
               class="btn btn--primary"
@@ -92,6 +105,7 @@
             >
               {{ creating ? 'Creating...' : 'Shorten' }}
             </button>
+            <p v-if="error" class="create-url__error">{{ error }}</p>
           </form>
           <p v-if="!canCreate" class="create-url__limit">
             You've reached your plan limit. 
@@ -109,13 +123,19 @@
             <p>No links yet. Create your first one above!</p>
           </div>
           <div v-else class="url-list__items">
-            <div v-for="url in urlStore.urls" :key="url.id" class="url-card">
+            <div v-for="url in urlStore.urls" :key="url.id" class="url-card" :class="{ 'url-card--expired': isExpired(url.expiresAt) }">
               <div class="url-card__main">
                 <div class="url-card__short">
                   <span class="url-card__short-link">{{ baseUrl }}/r/{{ url.shortCode }}</span>
                   <button @click="copyUrl(url.shortCode)" class="url-card__copy" :title="copied === url.shortCode ? 'Copied!' : 'Copy'">
                     {{ copied === url.shortCode ? '✓' : '📋' }}
                   </button>
+                  <span v-if="url.expiresAt" class="url-card__badge" :class="getExpirationClass(url.expiresAt)">
+                    {{ getExpirationLabel(url.expiresAt) }}
+                    <span v-if="isExpired(url.expiresAt)" class="url-card__expired-info" data-tooltip="Upgrade to Pro to reactivate this link before someone else claims it!">
+                      ⚠️
+                    </span>
+                  </span>
                 </div>
                 <p class="url-card__title">{{ url.title || 'Untitled' }}</p>
                 <p class="url-card__original">{{ url.originalUrl }}</p>
@@ -123,10 +143,24 @@
               <div class="url-card__stats">
                 <span class="url-card__clicks">{{ url.clicks || 0 }} clicks</span>
                 <div class="url-card__actions">
-                  <router-link :to="`/dashboard/analytics/${url.id}`" class="url-card__action">
+                  <button 
+                    v-if="!isExpired(url.expiresAt)"
+                    @click="router.push(`/dashboard/analytics/${url.id}`)" 
+                    class="url-card__action"
+                    title="View Analytics"
+                  >
                     📊
-                  </router-link>
-                  <button @click="confirmDeleteUrl(url.id)" class="url-card__action url-card__action--delete">
+                  </button>
+                  <button 
+                    v-else
+                    class="url-card__action url-card__action--disabled"
+                    title="Analytics disabled for expired links. Upgrade to Pro."
+                    disabled
+                  >
+                    📊
+                  </button>
+                  
+                  <button @click="confirmDeleteUrl(url.id)" class="url-card__action url-card__action--delete" title="Delete Link">
                     🗑️
                   </button>
                 </div>
@@ -167,9 +201,10 @@ const authStore = useAuthStore()
 const urlStore = useUrlStore()
 const plansStore = usePlansStore()
 
-const newUrl = reactive({ url: '', title: '' })
+const newUrl = reactive({ url: '', title: '', customAlias: '' })
 const creating = ref(false)
 const copied = ref('')
+const error = ref('')
 const sidebarOpen = ref(false)
 
 // Delete dialog state
@@ -212,16 +247,40 @@ async function handleLogout() {
 async function handleCreateUrl() {
   if (!canCreate.value) return
   creating.value = true
+  error.value = ''
+  
   try {
-    await urlStore.createUrl(newUrl.url, newUrl.title || undefined)
+    await urlStore.createUrl(newUrl.url, newUrl.title || undefined, newUrl.customAlias || undefined)
     newUrl.url = ''
     newUrl.title = ''
-  } catch (e) {
+    newUrl.customAlias = ''
+  } catch (e: any) {
     console.error('Failed to create URL:', e)
-    alert('Failed to create link. Please try again.')
+    error.value = e.message || 'Failed to create link. Please try again.'
   } finally {
     creating.value = false
   }
+}
+
+function isExpired(expiresAt?: string): boolean {
+  if (!expiresAt) return false
+  return new Date(expiresAt) < new Date()
+}
+
+function getExpirationClass(expiresAt: string): string {
+  if (isExpired(expiresAt)) return 'url-card__badge--expired'
+  
+  const daysLeft = Math.ceil((new Date(expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+  if (daysLeft <= 1) return 'url-card__badge--warning'
+  return 'url-card__badge--info'
+}
+
+function getExpirationLabel(expiresAt: string): string {
+  if (isExpired(expiresAt)) return 'Expired'
+  
+  const daysLeft = Math.ceil((new Date(expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+  if (daysLeft <= 1) return 'Expires soon'
+  return `Expires in ${daysLeft}d`
 }
 
 function copyUrl(shortCode: string) {
@@ -559,59 +618,91 @@ $sidebar-width: 260px;
   &__form {
     display: flex;
     flex-direction: column;
-    gap: $spacing-3;
+    gap: $spacing-4;
+  }
 
-    @media (min-width: $breakpoint-md) {
-      flex-direction: row;
-      flex-wrap: wrap;
-    }
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+  }
+
+  &__prefix {
+    color: $gray-500;
+    font-size: $font-size-sm;
+    white-space: nowrap;
+    background: $gray-100;
+    padding: $spacing-3;
+    border: 1px solid $gray-300;
+    border-right: none;
+    border-radius: $radius-lg 0 0 $radius-lg;
+    margin-right: -1px; // Merge borders
   }
 
   &__input {
-    @include input-base;
-    
-    @media (min-width: $breakpoint-md) {
-      flex: 2;
-      min-width: 200px;
+    width: 100%;
+    padding: $spacing-3 $spacing-4;
+    border: 1px solid $gray-300;
+    border-radius: $radius-lg;
+    font-size: $font-size-base;
+    transition: all $transition-fast;
+
+    &:focus {
+      outline: none;
+      border-color: $primary;
+      box-shadow: 0 0 0 3px rgba($primary, 0.1);
     }
 
     &--title {
-      @media (min-width: $breakpoint-md) {
-        flex: 1;
-        min-width: 150px;
-      }
+      font-size: $font-size-sm;
+    }
+
+    &--alias {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      flex: 1;
     }
   }
 
-  &__limit {
-    margin-top: $spacing-3;
+  &__error {
+    color: $error;
     font-size: $font-size-sm;
-    color: $warning;
+    margin-top: -$spacing-2;
+  }
+
+  &__limit {
+    margin-top: $spacing-4;
+    padding: $spacing-3;
+    background: $warning-light;
+    color: $warning-dark;
+    border-radius: $radius-md;
+    text-align: center;
+    font-size: $font-size-sm;
 
     a {
-      color: $primary;
+      color: $warning-dark;
+      font-weight: $font-weight-bold;
+      text-decoration: underline;
     }
   }
 }
 
 // URL List
 .url-list {
+  @include card;
+
   &__title {
     font-size: $font-size-lg;
     font-weight: $font-weight-semibold;
     color: $gray-900;
-    margin-bottom: $spacing-4;
+    margin-bottom: $spacing-6;
   }
 
   &__loading,
   &__empty {
     text-align: center;
-    padding: $spacing-8;
     color: $gray-500;
-
-    @media (min-width: $breakpoint-md) {
-      padding: $spacing-12;
-    }
+    padding: $spacing-8;
   }
 
   &__items {
@@ -622,16 +713,79 @@ $sidebar-width: 260px;
 }
 
 .url-card {
-  @include card;
+  border: 1px solid $gray-200;
+  border-radius: $radius-lg;
+  padding: $spacing-4;
   display: flex;
   flex-direction: column;
-  gap: $spacing-3;
+  gap: $spacing-4;
+  transition: all $transition-fast;
 
   @media (min-width: $breakpoint-md) {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    gap: $spacing-4;
+  }
+
+  &:hover {
+    border-color: $primary-light;
+    box-shadow: $shadow-sm;
+  }
+
+  &--expired {
+    background: $gray-50;
+    color: $gray-600;
+    
+    &:hover {
+      border-color: $gray-300;
+      box-shadow: none;
+    }
+  }
+
+  &__expired-info {
+    cursor: help;
+    font-size: 1.2em; // Larger icon
+    margin-left: 6px;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    
+    // Custom Tooltip
+    &:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 220px;
+      padding: $spacing-3;
+      background: $gray-900;
+      color: $white;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-normal;
+      text-align: center;
+      border-radius: $radius-md;
+      z-index: 10;
+      margin-bottom: 8px;
+      box-shadow: $shadow-lg;
+      pointer-events: none;
+      white-space: normal;
+      line-height: 1.4;
+    }
+
+    // Tooltip Arrow
+    &:hover::before {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%) translateY(4px); // Adjust gap
+      border: 6px solid transparent;
+      border-top-color: $gray-900;
+      margin-bottom: -4px;
+      z-index: 10;
+    }
   }
 
   &__main {
@@ -644,28 +798,21 @@ $sidebar-width: 260px;
     align-items: center;
     gap: $spacing-2;
     margin-bottom: $spacing-1;
+    flex-wrap: wrap;
   }
 
   &__short-link {
-    font-family: monospace;
-    font-size: $font-size-sm;
     color: $primary;
     font-weight: $font-weight-medium;
-
-    @media (min-width: $breakpoint-md) {
-      font-size: $font-size-base;
-    }
+    font-size: $font-size-lg;
   }
 
   &__copy {
-    background: none;
+    background: transparent;
     border: none;
+    color: $gray-400;
     cursor: pointer;
-    font-size: $font-size-base;
     padding: $spacing-1;
-    opacity: 0.7;
-    flex-shrink: 0;
-
     &:hover {
       opacity: 1;
     }
@@ -721,13 +868,27 @@ $sidebar-width: 260px;
     cursor: pointer;
     text-decoration: none;
     transition: all $transition-fast;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: $font-size-lg;
 
-    &:hover {
+    &:hover:not(:disabled) {
       background: $gray-200;
     }
 
     &--delete:hover {
       background: rgba($error, 0.1);
+    }
+    
+    &--disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      filter: grayscale(100%);
+      
+      &:hover {
+        background: $gray-100;
+      }
     }
   }
 }

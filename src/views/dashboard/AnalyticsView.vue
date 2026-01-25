@@ -128,7 +128,7 @@
           <div v-if="analytics?.isLimited" class="upgrade-banner">
             <div class="upgrade-banner__icon">📊</div>
             <div class="upgrade-banner__content">
-              <h4>Showing last 7 days only</h4>
+              <h4>Showing last 3 days only</h4>
               <p>Upgrade to Pro for full history, best posting times, referrer analytics, and unique visitors</p>
             </div>
             <router-link to="/dashboard/settings" class="upgrade-banner__btn">

@@ -25,12 +25,18 @@ export default async function handler(request: Request) {
     // Look up the short code
     const { data: urlData, error: urlError } = await supabase
         .from('urls')
-        .select('id, original_url')
+        .select('id, original_url, expires_at')
         .eq('short_code', shortCode)
         .single()
 
     if (urlError || !urlData) {
         return new Response(`Link not found: ${shortCode}`, { status: 404 })
+    }
+
+    // Check if link is expired
+    if (urlData.expires_at && new Date(urlData.expires_at) < new Date()) {
+        const expiredUrl = new URL('/expired', request.url)
+        return Response.redirect(expiredUrl.toString(), 302)
     }
 
     // Get browser and country info from headers

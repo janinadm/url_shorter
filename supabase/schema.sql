@@ -22,6 +22,7 @@ create table public.urls (
   short_code text unique not null,
   original_url text not null,
   title text,
+  expires_at timestamptz, -- null = permanent (Pro), date = expires (Free)
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );

@@ -42,6 +42,11 @@ const routes: RouteRecordRaw[] = [
         name: 'settings',
         component: () => import('@/views/dashboard/SettingsView.vue'),
         meta: { requiresAuth: true }
+    },
+    {
+        path: '/expired',
+        name: 'expired',
+        component: () => import('@/views/ExpiredView.vue')
     }
 ]
 

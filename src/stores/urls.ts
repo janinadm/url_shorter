@@ -62,36 +62,86 @@ export const useUrlStore = defineStore('urls', () => {
                 originalUrl: row.original_url,
                 title: row.title,
                 createdAt: row.created_at,
-                clicks: row.clicks?.[0]?.count || 0
+                clicks: row.clicks?.[0]?.count || 0,
+                expiresAt: row.expires_at
             }))
+        } catch (e) {
+            console.error('Error fetching URLs:', e)
+            // Reset to empty on error to clear loading state issues
+            urls.value = []
         } finally {
             loading.value = false
         }
     }
 
-    async function createUrl(originalUrl: string, title?: string): Promise<ShortUrl | null> {
+    async function createUrl(originalUrl: string, title?: string, customAlias?: string): Promise<ShortUrl | null> {
         const authStore = useAuthStore()
         if (!authStore.user) return null
 
-        // Generate random 6-character short code
-        const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
-        const shortCode = Array.from({ length: 6 }, () =>
-            chars.charAt(Math.floor(Math.random() * chars.length))
-        ).join('')
+        let shortCode = customAlias
+
+        // Validate custom alias format (alphanumeric, hyphens, 3-20 chars)
+        if (shortCode) {
+            const valid = /^[a-zA-Z0-9-]{3,20}$/.test(shortCode)
+            if (!valid) {
+                throw new Error('Custom alias must be 3-20 characters, alphanumeric or hyphens.')
+            }
+        } else {
+            // Generate random 6-character short code
+            const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
+            shortCode = Array.from({ length: 6 }, () =>
+                chars.charAt(Math.floor(Math.random() * chars.length))
+            ).join('')
+        }
+
+        // Calculate expiration for Free users
+        let expiresAt: string | null = null
+        if (authStore.user.plan === 'free') {
+            const date = new Date()
+            date.setDate(date.getDate() + 3)
+            expiresAt = date.toISOString()
+        }
 
         // Use mock data in dev mode
         if (!isSupabaseConfigured) {
+            // Check for duplicate in mock data
+            if (urls.value.some(u => u.shortCode === shortCode)) {
+                throw new Error('Custom alias already exists')
+            }
+
             const newUrl: ShortUrl = {
                 id: Date.now().toString(),
                 userId: authStore.user.id,
-                shortCode,
+                shortCode: shortCode!, // valid here
                 originalUrl,
                 title,
+                expiresAt: expiresAt || undefined,
                 createdAt: new Date().toISOString(),
                 clicks: 0
             }
             urls.value.unshift(newUrl)
             return newUrl
+        }
+
+        // Check if alias exists and handle expiration reclamation
+        if (isSupabaseConfigured) {
+            const { data: existing } = await supabase
+                .from('urls')
+                .select('id, expires_at')
+                .eq('short_code', shortCode)
+                .single()
+
+            if (existing) {
+                const isExpired = existing.expires_at && new Date(existing.expires_at) < new Date()
+
+                if (isExpired) {
+                    // Reclamation: Delete expired link to free up the alias
+                    await supabase.from('urls').delete().eq('id', existing.id)
+                } else {
+                    // Active link - cannot take it
+                    throw new Error(`Custom alias '${shortCode}' is already taken. Please choose another one.`)
+                }
+            }
         }
 
         // Get access token from localStorage (bypasses Supabase client blocking issues)
@@ -122,12 +172,17 @@ export const useUrlStore = defineStore('urls', () => {
                 user_id: authStore.user.id,
                 short_code: shortCode,
                 original_url: originalUrl,
-                title: title || null
+                title: title || null,
+                expires_at: expiresAt
             })
         })
 
         if (!insertResponse.ok) {
             const error = await insertResponse.json()
+            // Handle duplicate key error (code 23505)
+            if (error.code === '23505' || error.message?.includes('duplicate')) {
+                throw new Error(`Custom alias '${shortCode}' is already taken. Please choose another one.`)
+            }
             throw new Error(error.message || 'Failed to create URL')
         }
 
@@ -139,6 +194,7 @@ export const useUrlStore = defineStore('urls', () => {
             shortCode: data.short_code,
             originalUrl: data.original_url,
             title: data.title,
+            expiresAt: data.expires_at,
             createdAt: data.created_at,
             clicks: 0
         }
