@@ -162,6 +162,7 @@ export const useUrlStore = defineStore('urls', () => {
 
         // Check if alias exists and handle expiration reclamation
         if (isSupabaseConfigured) {
+            console.log('Checking availability for:', shortCode)
             const { data: existing } = await supabase
                 .from('urls')
                 .select('id, expires_at')
@@ -170,15 +171,24 @@ export const useUrlStore = defineStore('urls', () => {
 
             if (existing) {
                 const isExpired = existing.expires_at && new Date(existing.expires_at) < new Date()
+                console.log('Alias exists. Expired?', isExpired)
 
                 if (isExpired) {
+                    console.log('Attempting to reclaim expired alias...')
                     // Reclamation: Call secure RPC to delete expired link
-                    const { error: claimError } = await supabase
+                    const { data: claimed, error: claimError } = await supabase
                         .rpc('claim_expired_alias', { target_short_code: shortCode })
 
                     if (claimError) {
-                        throw new Error('Failed to claim expired alias. Please try again.')
+                        console.error('RPC Error:', claimError)
+                        throw new Error('Failed to claim expired alias. Database error.')
                     }
+
+                    if (!claimed) {
+                        console.warn('RPC returned false (could not claim)')
+                        throw new Error(`Could not claim alias '${shortCode}'. It may have been renewed or taken.`)
+                    }
+                    console.log('Alias successfully reclaimed.')
                 } else {
                     // Active link - cannot take it
                     throw new Error(`Custom alias '${shortCode}' is already taken. Please choose another one.`)
@@ -197,10 +207,8 @@ export const useUrlStore = defineStore('urls', () => {
         }
 
         const { access_token: accessToken } = JSON.parse(storedSession)
-        if (!accessToken) {
-            throw new Error('No access token. Please sign in again.')
-        }
 
+        console.log('Inserting new link...')
         // Insert URL using raw fetch (bypasses Supabase client blocking issues)
         const insertResponse = await fetch(`${supabaseUrl}/rest/v1/urls`, {
             method: 'POST',
@@ -221,6 +229,7 @@ export const useUrlStore = defineStore('urls', () => {
 
         if (!insertResponse.ok) {
             const error = await insertResponse.json()
+            console.error('Insert error:', error)
             // Handle duplicate key error (code 23505)
             if (error.code === '23505' || error.message?.includes('duplicate')) {
                 throw new Error(`Custom alias '${shortCode}' is already taken. Please choose another one.`)
@@ -228,6 +237,7 @@ export const useUrlStore = defineStore('urls', () => {
             throw new Error(error.message || 'Failed to create URL')
         }
 
+        console.log('Link created successfully')
         const [data] = await insertResponse.json()
 
         const newUrl: ShortUrl = {
