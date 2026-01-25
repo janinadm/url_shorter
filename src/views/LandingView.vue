@@ -272,11 +272,13 @@ function copyToClipboard() {
   left: 0;
   right: 0;
   z-index: 100;
-  padding: $spacing-4 0;
-  @include glass(0.8);
+  padding: $spacing-3 0; // Reduced padding
+  @include glass(0.95); // More opaque for readability
 
   &__container {
-    @include flex-between;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 $spacing-4;
@@ -290,26 +292,48 @@ function copyToClipboard() {
     display: flex;
     align-items: center;
     gap: $spacing-2;
-    font-size: $font-size-xl;
+    font-size: $font-size-lg;
     font-weight: $font-weight-bold;
     color: $gray-900;
     text-decoration: none;
+    z-index: 101; // Keep logo clickable
   }
 
   &__logo-icon {
-    font-size: $font-size-2xl;
+    font-size: $font-size-xl;
   }
 
   &__links {
+    display: none; // Hide desktop links by default on mobile
+
+    @media (min-width: $breakpoint-md) {
+      display: flex;
+      align-items: center;
+      gap: $spacing-6;
+    }
+  }
+
+  // Mobile Menu (Simple version: just Login/CTA for now)
+  &__mobile-actions {
     display: flex;
     align-items: center;
-    gap: $spacing-6;
+    gap: $spacing-2;
+
+    @media (min-width: $breakpoint-md) {
+      display: none;
+    }
+
+    .btn--sm {
+      padding: $spacing-2 $spacing-3;
+      font-size: 0.8rem;
+    }
   }
 
   &__link {
     color: $gray-600;
     font-weight: $font-weight-medium;
     transition: color $transition-fast;
+    text-decoration: none;
 
     &:hover {
       color: $gray-900;
@@ -350,6 +374,11 @@ function copyToClipboard() {
   &--lg {
     padding: $spacing-4 $spacing-8;
     font-size: $font-size-base;
+    width: 100%; // Full width on mobile
+
+    @media (min-width: $breakpoint-sm) {
+      width: auto;
+    }
   }
 
   &--block {
