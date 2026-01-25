@@ -29,6 +29,7 @@ const mockUrls: ShortUrl[] = [
 export const useUrlStore = defineStore('urls', () => {
     const urls = ref<ShortUrl[]>([])
     const loading = ref(false)
+    const error = ref<string | null>(null)
 
     const totalUrls = computed(() => urls.value.length)
     const totalClicks = computed(() =>
@@ -47,13 +48,13 @@ export const useUrlStore = defineStore('urls', () => {
                 return
             }
 
-            const { data, error } = await supabase
+            const { data, error: err } = await supabase
                 .from('urls')
                 .select('*, clicks:clicks(count)')
                 .eq('user_id', authStore.user.id)
                 .order('created_at', { ascending: false })
 
-            if (error) throw error
+            if (err) throw err
 
             urls.value = (data || []).map(row => ({
                 id: row.id,
@@ -69,6 +70,7 @@ export const useUrlStore = defineStore('urls', () => {
             console.error('Error fetching URLs:', e)
             // Reset to empty on error to clear loading state issues
             urls.value = []
+            error.value = 'Failed to load URLs'
         } finally {
             loading.value = false
         }
@@ -207,68 +209,36 @@ export const useUrlStore = defineStore('urls', () => {
         return newUrl
     }
 
-    async function updateUrl(id: string, updates: { title?: string; originalUrl?: string }) {
-        if (!isSupabaseConfigured) {
-            const idx = urls.value.findIndex(u => u.id === id)
-            if (idx !== -1) {
-                const current = urls.value[idx]
-                if (current) {
-                    urls.value[idx] = {
-                        ...current,
-                        title: updates.title ?? current.title,
-                        originalUrl: updates.originalUrl ?? current.originalUrl
-                    }
-                }
-            }
-            return
-        }
-
-        const { error } = await supabase
-            .from('urls')
-            .update({
-                title: updates.title,
-                original_url: updates.originalUrl
-            })
-            .eq('id', id)
-
-        if (error) throw error
-
-        const idx = urls.value.findIndex(u => u.id === id)
-        if (idx !== -1) {
-            const current = urls.value[idx]
-            if (current) {
-                urls.value[idx] = {
-                    ...current,
-                    title: updates.title ?? current.title,
-                    originalUrl: updates.originalUrl ?? current.originalUrl
-                }
-            }
-        }
-    }
-
     async function deleteUrl(id: string) {
         if (!isSupabaseConfigured) {
             urls.value = urls.value.filter(u => u.id !== id)
             return
         }
 
-        const { error } = await supabase
+        const { error: err } = await supabase
             .from('urls')
             .delete()
             .eq('id', id)
 
-        if (error) throw error
+        if (err) throw err
         urls.value = urls.value.filter(u => u.id !== id)
+    }
+
+    function reset() {
+        urls.value = []
+        loading.value = false
+        error.value = null
     }
 
     return {
         urls,
         loading,
+        error,
         totalUrls,
         totalClicks,
         fetchUrls,
         createUrl,
-        updateUrl,
-        deleteUrl
+        deleteUrl,
+        reset
     }
 })

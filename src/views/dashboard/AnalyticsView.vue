@@ -5,24 +5,23 @@
 
     <aside class="sidebar" :class="{ 'sidebar--open': sidebarOpen }">
       <router-link to="/dashboard" class="sidebar__logo">
-        <span class="sidebar__logo-icon">🔗</span>
-        <span class="sidebar__logo-text">Brevio</span>
+        <Logo />
       </router-link>
 
       <nav class="sidebar__nav">
         <router-link to="/dashboard" class="sidebar__link" @click="sidebarOpen = false">
-          <span class="sidebar__link-icon">📊</span>
+          <span class="sidebar__link-icon"><LayoutDashboard :size="20" /></span>
           Dashboard
         </router-link>
         <router-link to="/dashboard/settings" class="sidebar__link" @click="sidebarOpen = false">
-          <span class="sidebar__link-icon">⚙️</span>
+          <span class="sidebar__link-icon"><Settings :size="20" /></span>
           Settings
         </router-link>
       </nav>
 
       <div class="sidebar__footer">
         <button @click="goBack" class="sidebar__back">
-          ← Back to Dashboard
+          <ArrowLeft :size="16" /> Back to Dashboard
         </button>
       </div>
     </aside>
@@ -30,7 +29,7 @@
     <main class="main">
       <header class="header">
         <button class="header__menu-btn" @click="sidebarOpen = !sidebarOpen">
-          ☰
+          <Menu :size="24" />
         </button>
         <h1 class="header__title">Analytics</h1>
         <p v-if="url" class="header__subtitle">
@@ -45,21 +44,21 @@
           <!-- Stats Overview -->
           <div class="stats">
             <div class="stat-card">
-              <div class="stat-card__icon">👆</div>
+              <div class="stat-card__icon"><MousePointerClick :size="24" /></div>
               <div class="stat-card__content">
                 <p class="stat-card__value">{{ analytics.totalClicks }}</p>
                 <p class="stat-card__label">Total Clicks</p>
               </div>
             </div>
             <div class="stat-card">
-              <div class="stat-card__icon">📈</div>
+              <div class="stat-card__icon"><TrendingUp :size="24" /></div>
               <div class="stat-card__content">
                 <p class="stat-card__value">{{ averageClicks }}</p>
                 <p class="stat-card__label">Avg. Daily Clicks</p>
               </div>
             </div>
             <div class="stat-card">
-              <div class="stat-card__icon">🌍</div>
+              <div class="stat-card__icon"><Globe :size="24" /></div>
               <div class="stat-card__content">
                 <p class="stat-card__value">{{ topCountry }}</p>
                 <p class="stat-card__label">Top Country</p>
@@ -126,7 +125,7 @@
 
           <!-- Upgrade Banner for Free users -->
           <div v-if="analytics?.isLimited" class="upgrade-banner">
-            <div class="upgrade-banner__icon">📊</div>
+            <div class="upgrade-banner__icon"><BarChart2 :size="32" /></div>
             <div class="upgrade-banner__content">
               <h4>Showing last 3 days only</h4>
               <p>Upgrade to Pro for full history, best posting times, referrer analytics, and unique visitors</p>
@@ -148,6 +147,17 @@ import { useUrlStore } from '@/stores/urls'
 import { useAuthStore } from '@/stores/auth'
 import { useAnalyticsStore } from '@/stores/analytics'
 import { Chart, registerables } from 'chart.js'
+import Logo from '@/components/Logo.vue'
+import { 
+  LayoutDashboard, 
+  Settings, 
+  ArrowLeft, 
+  Menu, 
+  MousePointerClick, 
+  TrendingUp, 
+  Globe,
+  BarChart2
+} from 'lucide-vue-next'
 
 Chart.register(...registerables)
 

@@ -84,7 +84,10 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     async function signOut() {
+        const { useUrlStore } = await import('@/stores/urls')
+        const urlStore = useUrlStore()
         user.value = null
+        urlStore.reset()
         supabase.auth.signOut().catch(() => { })
     }
 
