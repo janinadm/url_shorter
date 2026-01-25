@@ -8,8 +8,6 @@
           <span class="nav__logo-text">Brevio</span>
         </a>
         <div class="nav__links">
-          <a href="#features" class="nav__link">Features</a>
-          <a href="#pricing" class="nav__link">Pricing</a>
           <router-link to="/login" class="nav__link">Login</router-link>
           <router-link to="/signup" class="btn btn--primary btn--sm">Get Started</router-link>
         </div>
@@ -304,11 +302,11 @@ function copyToClipboard() {
   }
 
   &__links {
-    display: none; // Hide desktop links by default on mobile
+    display: flex; // Show buttons on mobile too
+    align-items: center;
+    gap: $spacing-2; // Smaller gap for mobile
 
     @media (min-width: $breakpoint-md) {
-      display: flex;
-      align-items: center;
       gap: $spacing-6;
     }
   }
