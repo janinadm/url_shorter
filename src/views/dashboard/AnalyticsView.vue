@@ -67,7 +67,6 @@
             </div>
           </div>
 
-          <!-- Charts Grid -->
           <div class="charts">
             <!-- Clicks Over Time -->
             <div class="chart-card chart-card--wide">
@@ -92,6 +91,49 @@
                 <canvas ref="countryChartRef"></canvas>
               </div>
             </div>
+
+            <!-- Pro Analytics Section -->
+            <template v-if="isPro">
+              <!-- Peak Hours -->
+              <div class="chart-card chart-card--wide">
+                <h3 class="chart-card__title">📅 Best Times to Post</h3>
+                <div class="chart-card__content">
+                  <canvas ref="hoursChartRef"></canvas>
+                </div>
+              </div>
+
+              <!-- Top Referrers -->
+              <div class="chart-card">
+                <h3 class="chart-card__title">🔗 Top Referrers</h3>
+                <div class="chart-card__content">
+                  <canvas ref="referrersChartRef"></canvas>
+                </div>
+              </div>
+
+              <!-- Unique Visitors -->
+              <div class="chart-card">
+                <h3 class="chart-card__title">👥 Unique Visitors</h3>
+                <div class="chart-card__content chart-card__content--centered">
+                  <div class="unique-visitors">
+                    <span class="unique-visitors__number">{{ analytics?.uniqueVisitors || 0 }}</span>
+                    <span class="unique-visitors__label">unique visitors</span>
+                    <span class="unique-visitors__total">out of {{ analytics?.totalClicks || 0 }} total clicks</span>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Upgrade Banner for Free users -->
+          <div v-if="analytics?.isLimited" class="upgrade-banner">
+            <div class="upgrade-banner__icon">📊</div>
+            <div class="upgrade-banner__content">
+              <h4>Showing last 7 days only</h4>
+              <p>Upgrade to Pro for full history, best posting times, referrer analytics, and unique visitors</p>
+            </div>
+            <router-link to="/dashboard/settings" class="upgrade-banner__btn">
+              Upgrade to Pro
+            </router-link>
           </div>
         </template>
       </div>
@@ -103,6 +145,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUrlStore } from '@/stores/urls'
+import { useAuthStore } from '@/stores/auth'
 import { useAnalyticsStore } from '@/stores/analytics'
 import { Chart, registerables } from 'chart.js'
 
@@ -111,6 +154,7 @@ Chart.register(...registerables)
 const route = useRoute()
 const router = useRouter()
 const urlStore = useUrlStore()
+const authStore = useAuthStore()
 const analyticsStore = useAnalyticsStore()
 
 const baseUrl = import.meta.env.VITE_BASE_URL || window.location.origin
@@ -118,11 +162,15 @@ const baseUrl = import.meta.env.VITE_BASE_URL || window.location.origin
 const lineChartRef = ref<HTMLCanvasElement | null>(null)
 const browserChartRef = ref<HTMLCanvasElement | null>(null)
 const countryChartRef = ref<HTMLCanvasElement | null>(null)
+const hoursChartRef = ref<HTMLCanvasElement | null>(null)
+const referrersChartRef = ref<HTMLCanvasElement | null>(null)
 const sidebarOpen = ref(false)
 
 let lineChart: Chart | null = null
 let browserChart: Chart | null = null
 let countryChart: Chart | null = null
+let hoursChart: Chart | null = null
+let referrersChart: Chart | null = null
 
 const urlId = computed(() => route.params.id as string)
 const url = computed(() => urlStore.urls.find(u => u.id === urlId.value))
@@ -138,6 +186,10 @@ const topCountry = computed(() => {
   if (!analytics.value || analytics.value.clicksByCountry.length === 0) return 'N/A'
   return analytics.value.clicksByCountry[0]?.country ?? 'N/A'
 })
+
+const isPro = computed(() => 
+  authStore.user?.plan === 'pro' || authStore.user?.plan === 'enterprise'
+)
 
 function goBack() {
   router.push('/dashboard')
@@ -218,6 +270,50 @@ function createCharts() {
       }
     })
   }
+
+  // Bar chart - Clicks by hour (Pro only)
+  if (hoursChartRef.value && analytics.value.clicksByHour) {
+    hoursChart = new Chart(hoursChartRef.value, {
+      type: 'bar',
+      data: {
+        labels: analytics.value.clicksByHour.map(d => `${d.hour}:00`),
+        datasets: [{
+          label: 'Clicks',
+          data: analytics.value.clicksByHour.map(d => d.clicks),
+          backgroundColor: '#10b981'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    })
+  }
+
+  // Horizontal bar chart - Top referrers (Pro only)
+  if (referrersChartRef.value && analytics.value.topReferrers) {
+    referrersChart = new Chart(referrersChartRef.value, {
+      type: 'bar',
+      data: {
+        labels: analytics.value.topReferrers.map(d => d.referrer),
+        datasets: [{
+          label: 'Clicks',
+          data: analytics.value.topReferrers.map(d => d.clicks),
+          backgroundColor: '#6366f1'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: { legend: { display: false } }
+      }
+    })
+  }
 }
 
 function destroyCharts() {
@@ -232,6 +328,14 @@ function destroyCharts() {
   if (countryChart) {
     countryChart.destroy()
     countryChart = null
+  }
+  if (hoursChart) {
+    hoursChart.destroy()
+    hoursChart = null
+  }
+  if (referrersChart) {
+    referrersChart.destroy()
+    referrersChart = null
   }
 }
 
@@ -252,6 +356,7 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
+@use 'sass:color';
 @use '@/assets/scss/variables' as *;
 @use '@/assets/scss/mixins' as *;
 
@@ -534,5 +639,91 @@ onUnmounted(() => {
     height: 250px;
     position: relative;
   }
+}
+
+.upgrade-banner {
+  @include card;
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  padding: $spacing-4 $spacing-6;
+  margin-top: $spacing-6;
+  background: linear-gradient(135deg, rgba($primary, 0.05), rgba($primary, 0.1));
+  border: 1px solid rgba($primary, 0.2);
+
+  @media (max-width: $breakpoint-md) {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  &__icon {
+    font-size: 2rem;
+  }
+
+  &__content {
+    flex: 1;
+
+    h4 {
+      font-size: $font-size-base;
+      font-weight: $font-weight-semibold;
+      color: $gray-900;
+      margin-bottom: $spacing-1;
+    }
+
+    p {
+      font-size: $font-size-sm;
+      color: $gray-600;
+    }
+  }
+
+  &__btn {
+    padding: $spacing-2 $spacing-4;
+    background: $primary;
+    color: $white;
+    border-radius: $radius-md;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    text-decoration: none;
+    transition: background $transition-fast;
+
+    &:hover {
+      background: color.adjust($primary, $lightness: -10%);
+    }
+  }
+}
+
+.unique-visitors {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+
+  &__number {
+    font-size: 3.5rem;
+    font-weight: $font-weight-bold;
+    color: $primary;
+    line-height: 1;
+  }
+
+  &__label {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-medium;
+    color: $gray-700;
+    margin-top: $spacing-2;
+  }
+
+  &__total {
+    font-size: $font-size-sm;
+    color: $gray-500;
+    margin-top: $spacing-1;
+  }
+}
+
+.chart-card__content--centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

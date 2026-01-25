@@ -31,11 +31,12 @@ create table public.clicks (
   id uuid primary key default uuid_generate_v4(),
   url_id uuid references public.urls(id) on delete cascade,
   clicked_at timestamptz default now(),
+  device_type text check (device_type in ('mobile', 'desktop', 'tablet')),
   browser text,
   country text,
   referer text,
   user_agent text,
-  ip_hash text -- Hashed IP for privacy
+  ip_hash text
 );
 
 -- Indexes for performance

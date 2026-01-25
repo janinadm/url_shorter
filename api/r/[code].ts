@@ -50,19 +50,28 @@ export default async function handler(request: Request) {
         browser = 'Edge'
     }
 
-    // Record the click - MUST await to ensure it completes before redirect
+    // Detect device type from user agent
+    let deviceType: 'mobile' | 'desktop' | 'tablet' = 'desktop'
+    const ua = userAgent.toLowerCase()
+    if (/ipad|tablet|playbook|silk/.test(ua)) {
+        deviceType = 'tablet'
+    } else if (/mobile|iphone|ipod|android|blackberry|opera mini|iemobile/.test(ua)) {
+        deviceType = 'mobile'
+    }
+
+    // Record click analytics
     try {
         await supabase
             .from('clicks')
             .insert({
                 url_id: urlData.id,
+                device_type: deviceType,
                 browser,
                 country,
                 referer,
                 user_agent: userAgent.substring(0, 500),
             })
     } catch (e) {
-        // Log but don't block redirect
         console.error('Failed to record click:', e)
     }
 

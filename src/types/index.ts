@@ -31,6 +31,11 @@ export interface AnalyticsData {
   clicksByDate: { date: string; clicks: number }[]
   clicksByBrowser: { browser: string; clicks: number }[]
   clicksByCountry: { country: string; clicks: number }[]
+  // Pro-only analytics
+  clicksByHour?: { hour: number; clicks: number }[]
+  topReferrers?: { referrer: string; clicks: number }[]
+  uniqueVisitors?: number
+  isLimited?: boolean
 }
 
 export interface Plan {
