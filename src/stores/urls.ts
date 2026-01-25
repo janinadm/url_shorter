@@ -131,7 +131,7 @@ export const useUrlStore = defineStore('urls', () => {
                 .from('urls')
                 .select('id, expires_at')
                 .eq('short_code', shortCode)
-                .single()
+                .maybeSingle()
 
             if (existing) {
                 const isExpired = existing.expires_at && new Date(existing.expires_at) < new Date()
