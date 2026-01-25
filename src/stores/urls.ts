@@ -125,6 +125,41 @@ export const useUrlStore = defineStore('urls', () => {
             return newUrl
         }
 
+        // Check if user already shortened this Exact URL (to prevent duplicates)
+        if (isSupabaseConfigured) {
+            const { data: existingUrl } = await supabase
+                .from('urls')
+                .select('*')
+                .eq('user_id', authStore.user.id)
+                .eq('original_url', originalUrl)
+                .maybeSingle()
+
+            if (existingUrl) {
+                // Return existing link instead of creating duplicate
+                const mappedUrl: ShortUrl = {
+                    id: existingUrl.id,
+                    userId: existingUrl.user_id,
+                    shortCode: existingUrl.short_code,
+                    originalUrl: existingUrl.original_url,
+                    title: existingUrl.title,
+                    createdAt: existingUrl.created_at,
+                    clicks: 0, // We'd need to fetch clicks separate or assume 0/reload, but for creation return it's fine
+                    expiresAt: existingUrl.expires_at
+                }
+
+                // Move to top of list if locally present
+                const localIdx = urls.value.findIndex(u => u.id === mappedUrl.id)
+                if (localIdx !== -1) {
+                    urls.value.splice(localIdx, 1)
+                    urls.value.unshift(mappedUrl)
+                } else {
+                    urls.value.unshift(mappedUrl)
+                }
+
+                return mappedUrl
+            }
+        }
+
         // Check if alias exists and handle expiration reclamation
         if (isSupabaseConfigured) {
             const { data: existing } = await supabase
