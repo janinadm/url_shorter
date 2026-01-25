@@ -239,16 +239,28 @@ async function shortenDemo() {
   shortenedUrl.value = ''
   
   try {
-    const { data: code, error } = await supabase.rpc('create_demo_link', { target_url: demoUrl.value })
+    // Timeout promise to prevent hanging
+    const timeout = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Request timed out. Please update database schema.')), 10000)
+    )
+    
+    // RPC call
+    const rpcCall = supabase.rpc('create_demo_link', { target_url: demoUrl.value })
+    
+    // Race them
+    const result = await Promise.race([rpcCall, timeout]) as any
+    const { data: code, error } = result
     
     if (error) throw error
     if (code) {
       shortenedUrl.value = `${baseUrl}/r/${code}`
       message.value = ''
+    } else {
+      throw new Error('No code returned')
     }
-  } catch (e) {
-    console.error(e)
-    message.value = 'Failed to create link. Please try again.'
+  } catch (e: any) {
+    console.error('Demo link creation failed:', e)
+    message.value = `Error: ${e.message || 'Failed to create link'}`
   }
 }
 
