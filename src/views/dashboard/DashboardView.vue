@@ -152,7 +152,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, reactive, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUrlStore } from '@/stores/urls'
@@ -246,9 +246,16 @@ async function handleDeleteConfirm() {
   }
 }
 
-onMounted(() => {
-  urlStore.fetchUrls()
-})
+// Fetch URLs when auth is ready (handles both initial load and navigation)
+watch(
+  () => authStore.user,
+  (user) => {
+    if (user) {
+      urlStore.fetchUrls()
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <style lang="scss" scoped>
