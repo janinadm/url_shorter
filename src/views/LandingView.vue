@@ -243,8 +243,23 @@ const shortenedUrl = ref('')
 const copied = ref(false)
 const message = ref('')
 
+function isValidUrl(string: string) {
+  try {
+    const url = new URL(string)
+    return url.protocol === 'http:' || url.protocol === 'https:'
+  } catch (_) {
+    return false
+  }
+}
+
 async function shortenDemo() {
   if (!demoUrl.value) return
+  
+  if (!isValidUrl(demoUrl.value)) {
+    message.value = 'Please enter a valid URL (e.g., https://google.com)'
+    return
+  }
+
   message.value = 'Creating temporary link...'
   shortenedUrl.value = ''
   
