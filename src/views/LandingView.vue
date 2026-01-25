@@ -4,8 +4,7 @@
     <nav class="nav">
       <div class="nav__container container">
         <a href="/" class="nav__logo">
-          <span class="nav__logo-icon">🔗</span>
-          <span class="nav__logo-text">Brevio</span>
+          <Logo />
         </a>
         <div class="nav__links">
           <router-link to="/login" class="nav__link">Login</router-link>
@@ -53,7 +52,8 @@
               <div class="demo-card__result-url">
                 <span>{{ shortenedUrl }}</span>
                 <button @click="copyToClipboard" class="demo-card__copy">
-                  {{ copied ? '✓' : '📋' }}
+                  <Check v-if="copied" :size="20" />
+                  <Copy v-else :size="20" />
                 </button>
               </div>
               <p class="demo-card__hint">Link expires in 30 minutes. Sign up to keep it!</p>
@@ -73,7 +73,7 @@
         </p>
         <div class="features__grid">
           <div class="feature-card">
-            <div class="feature-card__icon">📊</div>
+            <div class="feature-card__icon"><BarChart2 :size="48" /></div>
             <h3 class="feature-card__title">Detailed Analytics</h3>
             <p class="feature-card__desc">
               Track clicks, see where your audience comes from, 
@@ -81,7 +81,7 @@
             </p>
           </div>
           <div class="feature-card">
-            <div class="feature-card__icon">⚡</div>
+            <div class="feature-card__icon"><Zap :size="48" /></div>
             <h3 class="feature-card__title">Lightning Fast</h3>
             <p class="feature-card__desc">
               Our links redirect in milliseconds. 
@@ -89,7 +89,7 @@
             </p>
           </div>
           <div class="feature-card">
-            <div class="feature-card__icon">🎨</div>
+            <div class="feature-card__icon"><Palette :size="48" /></div>
             <h3 class="feature-card__title">Custom Links</h3>
             <p class="feature-card__desc">
               Create memorable branded links that match your style 
@@ -97,7 +97,7 @@
             </p>
           </div>
           <div class="feature-card">
-            <div class="feature-card__icon">🌍</div>
+            <div class="feature-card__icon"><Globe :size="48" /></div>
             <h3 class="feature-card__title">Global Insights</h3>
             <p class="feature-card__desc">
               See which countries your clicks come from. 
@@ -105,7 +105,7 @@
             </p>
           </div>
           <div class="feature-card">
-            <div class="feature-card__icon">🔒</div>
+            <div class="feature-card__icon"><Shield :size="48" /></div>
             <h3 class="feature-card__title">Secure & Reliable</h3>
             <p class="feature-card__desc">
               Enterprise-grade security. Your links are always 
@@ -113,7 +113,7 @@
             </p>
           </div>
           <div class="feature-card">
-            <div class="feature-card__icon">📱</div>
+            <div class="feature-card__icon"><Smartphone :size="48" /></div>
             <h3 class="feature-card__title">Mobile Ready</h3>
             <p class="feature-card__desc">
               Manage your links from any device. 
@@ -141,7 +141,7 @@
             <ul class="pricing-card__features">
               <li>Up to 10 short links</li>
               <li>Basic analytics</li>
-              <li>7-day click history</li>
+              <li>3-day link expiration</li>
               <li>Standard support</li>
             </ul>
             <router-link to="/signup" class="btn btn--outline btn--block">
@@ -194,8 +194,7 @@
     <footer class="footer">
       <div class="footer__container container">
         <div class="footer__brand">
-          <span class="nav__logo-icon">🔗</span>
-          <span class="nav__logo-text">Brevio</span>
+          <Logo light />
           <p class="footer__tagline">Short links, big impact.</p>
         </div>
         <div class="footer__links">
@@ -226,6 +225,17 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
+import Logo from '@/components/Logo.vue'
+import { 
+  BarChart2, 
+  Zap, 
+  Palette, 
+  Globe, 
+  Shield, 
+  Smartphone, 
+  Copy, 
+  Check 
+} from 'lucide-vue-next'
 
 const baseUrl = import.meta.env.VITE_BASE_URL || window.location.origin
 const demoUrl = ref('')

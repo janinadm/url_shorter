@@ -5,17 +5,16 @@
     
     <aside class="sidebar" :class="{ 'sidebar--open': sidebarOpen }">
       <router-link to="/dashboard" class="sidebar__logo">
-        <span class="sidebar__logo-icon">🔗</span>
-        <span class="sidebar__logo-text">Brevio</span>
+        <Logo />
       </router-link>
 
       <nav class="sidebar__nav">
         <router-link to="/dashboard" class="sidebar__link" :class="{ 'sidebar__link--active': isActive('dashboard') }" @click="sidebarOpen = false">
-          <span class="sidebar__link-icon">📊</span>
+          <span class="sidebar__link-icon"><LayoutDashboard :size="20" /></span>
           Dashboard
         </router-link>
         <router-link to="/dashboard/settings" class="sidebar__link" :class="{ 'sidebar__link--active': isActive('settings') }" @click="sidebarOpen = false">
-          <span class="sidebar__link-icon">⚙️</span>
+          <span class="sidebar__link-icon"><Settings :size="20" /></span>
           Settings
         </router-link>
       </nav>
@@ -37,7 +36,7 @@
     <main class="main">
       <header class="header">
         <button class="header__menu-btn" @click="sidebarOpen = !sidebarOpen">
-          ☰
+          <Menu :size="24" />
         </button>
         <h1 class="header__title">{{ pageTitle }}</h1>
       </header>
@@ -46,21 +45,21 @@
       <div v-if="isActive('dashboard')" class="content">
         <div class="stats">
           <div class="stat-card">
-            <div class="stat-card__icon">🔗</div>
+            <div class="stat-card__icon"><Link :size="24" /></div>
             <div class="stat-card__content">
               <p class="stat-card__value">{{ urlStore.totalUrls }}</p>
               <p class="stat-card__label">Total Links</p>
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-card__icon">👆</div>
+            <div class="stat-card__icon"><MousePointerClick :size="24" /></div>
             <div class="stat-card__content">
               <p class="stat-card__value">{{ urlStore.totalClicks }}</p>
               <p class="stat-card__label">Total Clicks</p>
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-card__icon">📈</div>
+            <div class="stat-card__icon"><TrendingUp :size="24" /></div>
             <div class="stat-card__content">
               <p class="stat-card__value">{{ remainingLinks }}</p>
               <p class="stat-card__label">Links Remaining</p>
@@ -128,12 +127,13 @@
                 <div class="url-card__short">
                   <span class="url-card__short-link">{{ baseUrl }}/r/{{ url.shortCode }}</span>
                   <button @click="copyUrl(url.shortCode)" class="url-card__copy" :title="copied === url.shortCode ? 'Copied!' : 'Copy'">
-                    {{ copied === url.shortCode ? '✓' : '📋' }}
+                    <Check v-if="copied === url.shortCode" :size="16" />
+                    <Copy v-else :size="16" />
                   </button>
                   <span v-if="url.expiresAt" class="url-card__badge" :class="getExpirationClass(url.expiresAt)">
                     {{ getExpirationLabel(url.expiresAt) }}
                     <span v-if="isExpired(url.expiresAt)" class="url-card__expired-info" data-tooltip="Upgrade to Pro to reactivate this link before someone else claims it!">
-                      ⚠️
+                      <AlertTriangle :size="16" />
                     </span>
                   </span>
                 </div>
@@ -149,7 +149,7 @@
                     class="url-card__action"
                     title="View Analytics"
                   >
-                    📊
+                    <BarChart2 :size="18" />
                   </button>
                   <button 
                     v-else
@@ -157,11 +157,11 @@
                     title="Analytics disabled for expired links. Upgrade to Pro."
                     disabled
                   >
-                    📊
+                    <BarChart2 :size="18" />
                   </button>
                   
                   <button @click="confirmDeleteUrl(url.id)" class="url-card__action url-card__action--delete" title="Delete Link">
-                    🗑️
+                    <Trash2 :size="18" />
                   </button>
                 </div>
               </div>
@@ -192,6 +192,20 @@ import { useAuthStore } from '@/stores/auth'
 import { useUrlStore } from '@/stores/urls'
 import { usePlansStore } from '@/stores/plans'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import Logo from '@/components/Logo.vue'
+import { 
+  LayoutDashboard, 
+  Settings, 
+  Menu, 
+  Link, 
+  MousePointerClick, 
+  TrendingUp, 
+  BarChart2, 
+  Trash2, 
+  AlertTriangle, 
+  Copy, 
+  Check 
+} from 'lucide-vue-next'
 
 const baseUrl = import.meta.env.VITE_BASE_URL || window.location.origin
 
