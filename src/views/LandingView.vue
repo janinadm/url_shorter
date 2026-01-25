@@ -5,7 +5,7 @@
       <div class="nav__container container">
         <a href="/" class="nav__logo">
           <span class="nav__logo-icon">🔗</span>
-          <span class="nav__logo-text">LinkSnip</span>
+          <span class="nav__logo-text">Brevio</span>
         </a>
         <div class="nav__links">
           <a href="#features" class="nav__link">Features</a>
@@ -196,7 +196,7 @@
       <div class="footer__container container">
         <div class="footer__brand">
           <span class="nav__logo-icon">🔗</span>
-          <span class="nav__logo-text">LinkSnip</span>
+          <span class="nav__logo-text">Brevio</span>
           <p class="footer__tagline">Short links, big impact.</p>
         </div>
         <div class="footer__links">
@@ -217,7 +217,7 @@
           </div>
         </div>
         <div class="footer__bottom">
-          <p>© 2024 LinkSnip. All rights reserved.</p>
+          <p>© 2024 Brevio. All rights reserved.</p>
         </div>
       </div>
     </footer>

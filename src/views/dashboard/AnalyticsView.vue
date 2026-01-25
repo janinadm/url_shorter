@@ -6,7 +6,7 @@
     <aside class="sidebar" :class="{ 'sidebar--open': sidebarOpen }">
       <router-link to="/dashboard" class="sidebar__logo">
         <span class="sidebar__logo-icon">🔗</span>
-        <span class="sidebar__logo-text">LinkSnip</span>
+        <span class="sidebar__logo-text">Brevio</span>
       </router-link>
 
       <nav class="sidebar__nav">

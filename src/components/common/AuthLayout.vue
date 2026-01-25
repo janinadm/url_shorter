@@ -4,7 +4,7 @@
       <div class="auth__card">
         <router-link to="/" class="auth__logo">
           <span class="auth__logo-icon">🔗</span>
-          <span class="auth__logo-text">LinkSnip</span>
+          <span class="auth__logo-text">Brevio</span>
         </router-link>
         <slot />
       </div>
