@@ -191,7 +191,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, reactive, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUrlStore } from '@/stores/urls'
@@ -324,36 +324,10 @@ async function handleDeleteConfirm() {
   }
 }
 
-// Auto-refresh interval (30 seconds) to keep click counts updated
-const REFRESH_INTERVAL = 30000
-let refreshInterval: ReturnType<typeof setInterval> | null = null
-
-function startAutoRefresh() {
-  if (refreshInterval) return
-  
-  refreshInterval = setInterval(async () => {
-    if (!authStore.user) return
-    
-    try {
-      await urlStore.fetchUrls()
-    } catch (e) {
-      console.debug('Auto-refresh failed:', e)
-    }
-  }, REFRESH_INTERVAL)
-}
-
-function stopAutoRefresh() {
-  if (refreshInterval) {
-    clearInterval(refreshInterval)
-    refreshInterval = null
-  }
-}
-
 // Fetch URLs when component mounts (handles navigation back)
 onMounted(() => {
   if (authStore.user) {
     urlStore.fetchUrls()
-    startAutoRefresh()
   }
 })
 
@@ -364,14 +338,9 @@ watch(
     // Only fetch if user changed (not just on mount)
     if (user && !oldUser) {
       urlStore.fetchUrls()
-      startAutoRefresh()
     }
   }
 )
-
-onUnmounted(() => {
-  stopAutoRefresh()
-})
 </script>
 
 <style lang="scss" scoped>

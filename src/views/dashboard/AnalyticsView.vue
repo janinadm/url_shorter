@@ -349,36 +349,12 @@ function destroyCharts() {
   }
 }
 
-// Auto-refresh interval (30 seconds)
-const REFRESH_INTERVAL = 30000
-let refreshInterval: ReturnType<typeof setInterval> | null = null
-
-// Start auto-refresh
-function startAutoRefresh() {
-  if (refreshInterval) return
-  
-  refreshInterval = setInterval(async () => {
-    const id = urlId.value
-    if (!id) return
-    
-    // Silently refresh data (don't show loading state)
-    try {
-      await analyticsStore.fetchAnalytics(id)
-      // Update charts with new data
-      setTimeout(createCharts, 100)
-    } catch (e) {
-      console.debug('Auto-refresh failed:', e)
-    }
-  }, REFRESH_INTERVAL)
-}
-
-// Stop auto-refresh
-function stopAutoRefresh() {
-  if (refreshInterval) {
-    clearInterval(refreshInterval)
-    refreshInterval = null
+// Watch for data changes to update charts automatically (e.g. from Realtime updates)
+watch(analytics, () => {
+  if (analytics.value) {
+    createCharts()
   }
-}
+}, { deep: true })
 
 // Fetch analytics when component mounts
 onMounted(async () => {
@@ -390,10 +366,8 @@ onMounted(async () => {
   }
   
   await analyticsStore.fetchAnalytics(id)
+  analyticsStore.subscribeToRealtime(id)
   setTimeout(createCharts, 100)
-  
-  // Start auto-refresh
-  startAutoRefresh()
 })
 
 // Also watch for urlId changes (e.g., navigating between different link analytics)
@@ -405,11 +379,11 @@ watch(urlId, async (id, oldId) => {
   }
   
   await analyticsStore.fetchAnalytics(id)
+  analyticsStore.subscribeToRealtime(id)
   setTimeout(createCharts, 100)
 })
 
 onUnmounted(() => {
-  stopAutoRefresh()
   destroyCharts()
   analyticsStore.clearAnalytics()
 })

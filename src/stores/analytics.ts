@@ -1,3 +1,4 @@
+import type { RealtimeChannel } from '@supabase/supabase-js'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
@@ -69,12 +70,16 @@ function extractDomain(referer: string): string {
 export const useAnalyticsStore = defineStore('analytics', () => {
     const data = ref<AnalyticsData | null>(null)
     const loading = ref(false)
+    let realtimeSubscription: RealtimeChannel | null = null
 
-    async function fetchAnalytics(urlId: string) {
+    async function fetchAnalytics(urlId: string, options: { silent?: boolean } = {}) {
         const authStore = useAuthStore()
         const userIsPro = isPro(authStore.user?.plan)
 
-        loading.value = true
+        if (!options.silent) {
+            loading.value = true
+        }
+
         try {
             if (!isSupabaseConfigured) {
                 data.value = generateMockAnalytics(userIsPro)
@@ -156,27 +161,64 @@ export const useAnalyticsStore = defineStore('analytics', () => {
             data.value = result
         } catch (e) {
             console.error('Error fetching analytics:', e)
-            // Set empty data on error so UI doesn't stay stuck
-            data.value = {
-                totalClicks: 0,
-                clicksByDate: [],
-                clicksByBrowser: [],
-                clicksByCountry: [],
-                isLimited: !userIsPro
+            if (!options.silent) {
+                // Set empty data on error so UI doesn't stay stuck
+                data.value = {
+                    totalClicks: 0,
+                    clicksByDate: [],
+                    clicksByBrowser: [],
+                    clicksByCountry: [],
+                    isLimited: !userIsPro
+                }
             }
         } finally {
-            loading.value = false
+            if (!options.silent) {
+                loading.value = false
+            }
+        }
+    }
+
+    function subscribeToRealtime(urlId: string) {
+        unsubscribeFromRealtime()
+
+        if (!isSupabaseConfigured) return
+
+        realtimeSubscription = supabase
+            .channel(`analytics_clicks:${urlId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'clicks',
+                    filter: `url_id=eq.${urlId}`
+                },
+                () => {
+                    // Update data silently when new click arrives
+                    fetchAnalytics(urlId, { silent: true })
+                }
+            )
+            .subscribe()
+    }
+
+    function unsubscribeFromRealtime() {
+        if (realtimeSubscription) {
+            supabase.removeChannel(realtimeSubscription)
+            realtimeSubscription = null
         }
     }
 
     function clearAnalytics() {
         data.value = null
+        unsubscribeFromRealtime()
     }
 
     return {
         data,
         loading,
         fetchAnalytics,
+        subscribeToRealtime,
+        unsubscribeFromRealtime,
         clearAnalytics
     }
 })

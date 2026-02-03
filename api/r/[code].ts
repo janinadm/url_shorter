@@ -4,6 +4,17 @@ export const config = {
     runtime: 'edge',
 }
 
+/**
+ * Hash IP address for privacy-preserving unique visitor tracking
+ */
+async function hashIp(ip: string): Promise<string> {
+    const encoder = new TextEncoder()
+    const data = encoder.encode(ip)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
 export default async function handler(request: Request) {
     const url = new URL(request.url)
     const pathParts = url.pathname.split('/')
@@ -39,6 +50,10 @@ export default async function handler(request: Request) {
         return Response.redirect(expiredUrl.toString(), 302)
     }
 
+    // Get client IP
+    const ip = request.headers.get('x-forwarded-for') || 'unknown'
+    const ipHash = await hashIp(ip.split(',')[0].trim())
+
     // Get browser and country info from headers
     const userAgent = request.headers.get('user-agent') || ''
     const country = request.headers.get('x-vercel-ip-country') || 'Unknown'
@@ -66,20 +81,21 @@ export default async function handler(request: Request) {
     }
 
     // Record click analytics
-    try {
-        await supabase
-            .from('clicks')
-            .insert({
-                url_id: urlData.id,
-                device_type: deviceType,
-                browser,
-                country,
-                referer,
-                user_agent: userAgent.substring(0, 500),
-            })
-    } catch (e) {
-        console.error('Failed to record click:', e)
-    }
+    // Note: We don't await this to speed up redirect
+    supabase
+        .from('clicks')
+        .insert({
+            url_id: urlData.id,
+            device_type: deviceType,
+            browser,
+            country,
+            referer,
+            user_agent: userAgent.substring(0, 500),
+            ip_hash: ipHash
+        })
+        .then(({ error }) => {
+            if (error) console.error('Failed to record click:', error)
+        })
 
     // Redirect to original URL
     return Response.redirect(urlData.original_url, 302)
