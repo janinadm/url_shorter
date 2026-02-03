@@ -25,9 +25,10 @@ BEGIN
   AND id != latest_session_id;
   
   -- Also clean up the refresh tokens for those sessions
+  -- Note: explicit casting added to handle potential schema differences where session_id might be varchar
   DELETE FROM auth.refresh_tokens
-  WHERE user_id = current_user_id
-  AND session_id != latest_session_id;
+  WHERE user_id::text = current_user_id::text
+  AND session_id::text != latest_session_id::text;
 END;
 $$;
 
