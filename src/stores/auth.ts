@@ -31,6 +31,8 @@ export const useAuthStore = defineStore('auth', () => {
         // Listen for auth changes
         supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
             if (event === 'SIGNED_IN' && session?.user) {
+                // Prevent infinite loop: only fetch if user changed
+                if (user.value?.id === session.user.id) return
                 await fetchProfile(session.user.id)
             } else if (event === 'SIGNED_OUT') {
                 user.value = null
