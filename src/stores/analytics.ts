@@ -3,11 +3,10 @@ import { ref } from 'vue'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { useAuthStore } from './auth'
 import type { AnalyticsData } from '@/types'
+import { FREE_ANALYTICS_HISTORY_DAYS, isPro } from '@/constants'
 
-const FREE_PLAN_DAYS_LIMIT = 7
-
-function generateMockAnalytics(isPro: boolean): AnalyticsData {
-    const days = isPro ? 30 : FREE_PLAN_DAYS_LIMIT
+function generateMockAnalytics(userIsPro: boolean): AnalyticsData {
+    const days = userIsPro ? 30 : FREE_ANALYTICS_HISTORY_DAYS
     const clicksByDate: { date: string; clicks: number }[] = []
 
     for (let i = days - 1; i >= 0; i--) {
@@ -36,10 +35,10 @@ function generateMockAnalytics(isPro: boolean): AnalyticsData {
             { country: 'France', clicks: 10 },
             { country: 'Other', clicks: 18 }
         ],
-        isLimited: !isPro
+        isLimited: !userIsPro
     }
 
-    if (isPro) {
+    if (userIsPro) {
         base.clicksByHour = Array.from({ length: 24 }, (_, hour) => ({
             hour,
             clicks: Math.floor(Math.random() * 20) + 1
@@ -73,12 +72,12 @@ export const useAnalyticsStore = defineStore('analytics', () => {
 
     async function fetchAnalytics(urlId: string) {
         const authStore = useAuthStore()
-        const isPro = authStore.user?.plan === 'pro' || authStore.user?.plan === 'enterprise'
+        const userIsPro = isPro(authStore.user?.plan)
 
         loading.value = true
         try {
             if (!isSupabaseConfigured) {
-                data.value = generateMockAnalytics(isPro)
+                data.value = generateMockAnalytics(userIsPro)
                 return
             }
 
@@ -87,10 +86,10 @@ export const useAnalyticsStore = defineStore('analytics', () => {
                 .select('*')
                 .eq('url_id', urlId)
 
-            if (!isPro) {
-                const sevenDaysAgo = new Date()
-                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - FREE_PLAN_DAYS_LIMIT)
-                query = query.gte('clicked_at', sevenDaysAgo.toISOString())
+            if (!userIsPro) {
+                const limitDate = new Date()
+                limitDate.setDate(limitDate.getDate() - FREE_ANALYTICS_HISTORY_DAYS)
+                query = query.gte('clicked_at', limitDate.toISOString())
             }
 
             const { data: clicks, error } = await query
@@ -115,7 +114,7 @@ export const useAnalyticsStore = defineStore('analytics', () => {
                 const country = click.country || 'Unknown'
                 clicksByCountry[country] = (clicksByCountry[country] || 0) + 1
 
-                if (isPro) {
+                if (userIsPro) {
                     const hour = new Date(click.clicked_at).getHours()
                     clicksByHour[hour] = (clicksByHour[hour] || 0) + 1
 
@@ -139,10 +138,10 @@ export const useAnalyticsStore = defineStore('analytics', () => {
                 clicksByCountry: Object.entries(clicksByCountry)
                     .map(([country, clicks]) => ({ country, clicks }))
                     .sort((a, b) => b.clicks - a.clicks),
-                isLimited: !isPro
+                isLimited: !userIsPro
             }
 
-            if (isPro) {
+            if (userIsPro) {
                 result.clicksByHour = Array.from({ length: 24 }, (_, hour) => ({
                     hour,
                     clicks: clicksByHour[hour] || 0
@@ -163,7 +162,7 @@ export const useAnalyticsStore = defineStore('analytics', () => {
                 clicksByDate: [],
                 clicksByBrowser: [],
                 clicksByCountry: [],
-                isLimited: !isPro
+                isLimited: !userIsPro
             }
         } finally {
             loading.value = false

@@ -26,7 +26,7 @@
 
       <button 
         type="submit" 
-        class="btn btn--primary btn--block"
+        class="auth-btn auth-btn--primary auth-btn--block"
         :disabled="loading || success"
       >
         {{ loading ? 'Sending...' : 'Send reset link' }}
@@ -70,77 +70,5 @@ async function handleSubmit() {
 </script>
 
 <style lang="scss" scoped>
-@use '@/assets/scss/variables' as *;
-@use '@/assets/scss/mixins' as *;
-
-.auth-form {
-  &__title {
-    font-size: $font-size-2xl;
-    font-weight: $font-weight-bold;
-    color: $gray-900;
-    text-align: center;
-  }
-
-  &__subtitle {
-    color: $gray-500;
-    text-align: center;
-    margin-bottom: $spacing-6;
-  }
-
-  &__field {
-    margin-bottom: $spacing-4;
-  }
-
-  &__label {
-    display: block;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-medium;
-    color: $gray-700;
-    margin-bottom: $spacing-1;
-  }
-
-  &__input {
-    @include input-base;
-  }
-
-  &__error {
-    padding: $spacing-3;
-    background: rgba($error, 0.1);
-    border: 1px solid $error;
-    border-radius: $radius-md;
-    color: $error;
-    font-size: $font-size-sm;
-    margin-bottom: $spacing-4;
-  }
-
-  &__success {
-    padding: $spacing-3;
-    background: rgba($success, 0.1);
-    border: 1px solid $success;
-    border-radius: $radius-md;
-    color: $success;
-    font-size: $font-size-sm;
-    margin-bottom: $spacing-4;
-    text-align: center;
-  }
-}
-
-.btn {
-  @include button-base;
-  margin-top: $spacing-2;
-
-  &--primary {
-    background: $gradient-primary;
-    color: $white;
-
-    &:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: $shadow-lg;
-    }
-  }
-
-  &--block {
-    width: 100%;
-  }
-}
+@use '@/assets/scss/auth';
 </style>

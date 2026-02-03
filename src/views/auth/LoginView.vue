@@ -51,7 +51,7 @@
 
       <button 
         type="submit" 
-        class="btn btn--primary btn--block"
+        class="auth-btn auth-btn--primary auth-btn--block"
         :disabled="loading"
       >
         {{ loading ? 'Signing in...' : 'Sign in' }}
@@ -99,104 +99,5 @@ async function handleSubmit() {
 </script>
 
 <style lang="scss" scoped>
-@use '@/assets/scss/variables' as *;
-@use '@/assets/scss/mixins' as *;
-
-.auth-form {
-  &__title {
-    font-size: $font-size-2xl;
-    font-weight: $font-weight-bold;
-    color: $gray-900;
-    text-align: center;
-  }
-
-  &__subtitle {
-    color: $gray-500;
-    text-align: center;
-    margin-bottom: $spacing-6;
-  }
-
-  &__field {
-    margin-bottom: $spacing-4;
-  }
-
-  &__label {
-    display: block;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-medium;
-    color: $gray-700;
-    margin-bottom: $spacing-1;
-  }
-
-  &__input {
-    @include input-base;
-  }
-  
-  &__password-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-    
-    .auth-form__input {
-      padding-right: 44px;
-    }
-  }
-  
-  &__toggle-password {
-    position: absolute;
-    right: 12px;
-    background: none;
-    border: none;
-    color: $gray-400;
-    cursor: pointer;
-    padding: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    
-    &:hover {
-      color: $gray-600;
-    }
-  }
-
-  &__actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: $spacing-4;
-  }
-
-  &__link {
-    font-size: $font-size-sm;
-    color: $primary;
-  }
-
-  &__error {
-    padding: $spacing-3;
-    background: rgba($error, 0.1);
-    border: 1px solid $error;
-    border-radius: $radius-md;
-    color: $error;
-    font-size: $font-size-sm;
-    margin-bottom: $spacing-4;
-  }
-}
-
-.btn {
-  @include button-base;
-  margin-top: $spacing-2;
-
-  &--primary {
-    background: $gradient-primary;
-    color: $white;
-
-    &:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: $shadow-lg;
-    }
-  }
-
-  &--block {
-    width: 100%;
-  }
-}
+@use '@/assets/scss/auth';
 </style>
