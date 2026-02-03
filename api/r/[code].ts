@@ -81,21 +81,21 @@ export default async function handler(request: Request) {
     }
 
     // Record click analytics
-    // Note: We don't await this to speed up redirect
-    supabase
-        .from('clicks')
-        .insert({
-            url_id: urlData.id,
-            device_type: deviceType,
-            browser,
-            country,
-            referer,
-            user_agent: userAgent.substring(0, 500),
-            ip_hash: ipHash
-        })
-        .then(({ error }) => {
-            if (error) console.error('Failed to record click:', error)
-        })
+    try {
+        await supabase
+            .from('clicks')
+            .insert({
+                url_id: urlData.id,
+                device_type: deviceType,
+                browser,
+                country,
+                referer,
+                user_agent: userAgent.substring(0, 500),
+                ip_hash: ipHash
+            })
+    } catch (e) {
+        console.error('Failed to record click:', e)
+    }
 
     // Redirect to original URL
     return Response.redirect(urlData.original_url, 302)
