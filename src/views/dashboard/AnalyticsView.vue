@@ -349,6 +349,37 @@ function destroyCharts() {
   }
 }
 
+// Auto-refresh interval (30 seconds)
+const REFRESH_INTERVAL = 30000
+let refreshInterval: ReturnType<typeof setInterval> | null = null
+
+// Start auto-refresh
+function startAutoRefresh() {
+  if (refreshInterval) return
+  
+  refreshInterval = setInterval(async () => {
+    const id = urlId.value
+    if (!id) return
+    
+    // Silently refresh data (don't show loading state)
+    try {
+      await analyticsStore.fetchAnalytics(id)
+      // Update charts with new data
+      setTimeout(createCharts, 100)
+    } catch (e) {
+      console.debug('Auto-refresh failed:', e)
+    }
+  }, REFRESH_INTERVAL)
+}
+
+// Stop auto-refresh
+function stopAutoRefresh() {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+    refreshInterval = null
+  }
+}
+
 // Fetch analytics when component mounts
 onMounted(async () => {
   const id = urlId.value
@@ -360,6 +391,9 @@ onMounted(async () => {
   
   await analyticsStore.fetchAnalytics(id)
   setTimeout(createCharts, 100)
+  
+  // Start auto-refresh
+  startAutoRefresh()
 })
 
 // Also watch for urlId changes (e.g., navigating between different link analytics)
@@ -375,6 +409,7 @@ watch(urlId, async (id, oldId) => {
 })
 
 onUnmounted(() => {
+  stopAutoRefresh()
   destroyCharts()
   analyticsStore.clearAnalytics()
 })
