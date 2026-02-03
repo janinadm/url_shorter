@@ -20,6 +20,9 @@ export const useAuthStore = defineStore('auth', () => {
             if (session?.user) {
                 await fetchProfile(session.user.id)
             }
+        } catch (e) {
+            // Ignore auth errors - user is not authenticated
+            console.debug('Auth init: no valid session')
         } finally {
             loading.value = false
             initialized.value = true
@@ -63,6 +66,12 @@ export const useAuthStore = defineStore('auth', () => {
                 options: { data: { name } }
             })
             if (error) throw error
+
+            // Immediately fetch profile so user is available before navigation
+            if (data.user) {
+                await fetchProfile(data.user.id)
+            }
+
             return data
         } finally {
             loading.value = false
@@ -77,6 +86,20 @@ export const useAuthStore = defineStore('auth', () => {
                 password
             })
             if (error) throw error
+
+            // Immediately fetch profile so user is available before navigation
+            if (data.user) {
+                await fetchProfile(data.user.id)
+
+                // Enforce single session - close all other sessions for this user
+                try {
+                    await supabase.rpc('enforce_single_session')
+                } catch (e) {
+                    // Non-critical - log but don't block login
+                    console.debug('Could not enforce single session:', e)
+                }
+            }
+
             return data
         } finally {
             loading.value = false

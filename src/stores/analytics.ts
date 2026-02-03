@@ -155,6 +155,16 @@ export const useAnalyticsStore = defineStore('analytics', () => {
             }
 
             data.value = result
+        } catch (e) {
+            console.error('Error fetching analytics:', e)
+            // Set empty data on error so UI doesn't stay stuck
+            data.value = {
+                totalClicks: 0,
+                clicksByDate: [],
+                clicksByBrowser: [],
+                clicksByCountry: [],
+                isLimited: !isPro
+            }
         } finally {
             loading.value = false
         }

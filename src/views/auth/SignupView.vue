@@ -29,15 +29,26 @@
 
       <div class="auth-form__field">
         <label for="password" class="auth-form__label">Password</label>
-        <input
-          id="password"
-          v-model="form.password"
-          type="password"
-          class="auth-form__input"
-          placeholder="Min. 8 characters"
-          required
-          minlength="8"
-        />
+        <div class="auth-form__password-wrapper">
+          <input
+            id="password"
+            v-model="form.password"
+            :type="showPassword ? 'text' : 'password'"
+            class="auth-form__input"
+            placeholder="Min. 8 characters"
+            required
+            minlength="8"
+          />
+          <button 
+            type="button" 
+            class="auth-form__toggle-password"
+            @click="showPassword = !showPassword"
+            :title="showPassword ? 'Hide password' : 'Show password'"
+          >
+            <EyeOff v-if="showPassword" :size="18" />
+            <Eye v-else :size="18" />
+          </button>
+        </div>
       </div>
 
       <div v-if="error" class="auth-form__error">
@@ -67,6 +78,7 @@
 import { ref, reactive } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import AuthLayout from '@/components/common/AuthLayout.vue'
+import { Eye, EyeOff } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 
@@ -79,6 +91,7 @@ const form = reactive({
 const loading = ref(false)
 const error = ref('')
 const success = ref(false)
+const showPassword = ref(false)
 
 async function handleSubmit() {
   error.value = ''
@@ -127,6 +140,33 @@ async function handleSubmit() {
 
   &__input {
     @include input-base;
+  }
+  
+  &__password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    
+    .auth-form__input {
+      padding-right: 44px;
+    }
+  }
+  
+  &__toggle-password {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    color: $gray-400;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &:hover {
+      color: $gray-600;
+    }
   }
 
   &__error {

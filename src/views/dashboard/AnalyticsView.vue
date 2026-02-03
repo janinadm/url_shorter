@@ -141,7 +141,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onUnmounted, watch } from 'vue'
+import { ref, computed, onUnmounted, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUrlStore } from '@/stores/urls'
 import { useAuthStore } from '@/stores/auth'
@@ -349,8 +349,9 @@ function destroyCharts() {
   }
 }
 
-// Fetch analytics when route changes or on initial load
-watch(urlId, async (id) => {
+// Fetch analytics when component mounts
+onMounted(async () => {
+  const id = urlId.value
   if (!id) return
   
   if (urlStore.urls.length === 0) {
@@ -359,7 +360,19 @@ watch(urlId, async (id) => {
   
   await analyticsStore.fetchAnalytics(id)
   setTimeout(createCharts, 100)
-}, { immediate: true })
+})
+
+// Also watch for urlId changes (e.g., navigating between different link analytics)
+watch(urlId, async (id, oldId) => {
+  if (!id || id === oldId) return
+  
+  if (urlStore.urls.length === 0) {
+    await urlStore.fetchUrls()
+  }
+  
+  await analyticsStore.fetchAnalytics(id)
+  setTimeout(createCharts, 100)
+})
 
 onUnmounted(() => {
   destroyCharts()

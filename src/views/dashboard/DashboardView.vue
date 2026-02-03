@@ -91,7 +91,6 @@
                 type="text"
                 placeholder="Custom alias (optional)"
                 class="create-url__input create-url__input--alias"
-                pattern="^[a-zA-Z0-9-]+$"
                 minlength="3"
                 maxlength="20"
                 title="3-20 characters, alphanumeric and hyphens only"
@@ -125,8 +124,14 @@
             <div v-for="url in urlStore.urls" :key="url.id" class="url-card" :class="{ 'url-card--expired': isExpired(url.expiresAt) }">
               <div class="url-card__main">
                 <div class="url-card__short">
-                  <span class="url-card__short-link">{{ baseUrl }}/r/{{ url.shortCode }}</span>
-                  <button @click="copyUrl(url.shortCode)" class="url-card__copy" :title="copied === url.shortCode ? 'Copied!' : 'Copy'">
+                  <span class="url-card__short-link" :class="{ 'url-card__short-link--expired': isExpired(url.expiresAt) }">{{ baseUrl }}/r/{{ url.shortCode }}</span>
+                  <button 
+                    @click="copyUrl(url.shortCode)" 
+                    class="url-card__copy" 
+                    :class="{ 'url-card__copy--disabled': isExpired(url.expiresAt) }"
+                    :disabled="isExpired(url.expiresAt)"
+                    :title="isExpired(url.expiresAt) ? 'Link expired' : (copied === url.shortCode ? 'Copied!' : 'Copy')"
+                  >
                     <Check v-if="copied === url.shortCode" :size="16" />
                     <Copy v-else :size="16" />
                   </button>
@@ -186,7 +191,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, watch } from 'vue'
+import { ref, computed, reactive, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUrlStore } from '@/stores/urls'
@@ -319,15 +324,22 @@ async function handleDeleteConfirm() {
   }
 }
 
-// Fetch URLs when auth is ready (handles both initial load and navigation)
+// Fetch URLs when component mounts (handles navigation back)
+onMounted(() => {
+  if (authStore.user) {
+    urlStore.fetchUrls()
+  }
+})
+
+// Also watch for auth changes (handles login redirect)
 watch(
   () => authStore.user,
-  (user) => {
-    if (user) {
+  (user, oldUser) => {
+    // Only fetch if user changed (not just on mount)
+    if (user && !oldUser) {
       urlStore.fetchUrls()
     }
-  },
-  { immediate: true }
+  }
 )
 </script>
 
@@ -827,9 +839,19 @@ $sidebar-width: 260px;
     color: $gray-400;
     cursor: pointer;
     padding: $spacing-1;
-    &:hover {
+    &:hover:not(:disabled) {
       opacity: 1;
     }
+    
+    &--disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+  }
+  
+  &__short-link--expired {
+    color: $gray-400;
+    text-decoration: line-through;
   }
 
   &__title {
