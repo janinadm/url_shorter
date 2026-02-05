@@ -12,7 +12,7 @@ A modern, production-ready URL shortener for content creators and influencers. B
 - 📱 **Responsive** - Works on desktop and mobile
 - 👁️ **Password Visibility Toggle** - Show/hide password in auth forms
 - ⏱️ **Request Timeouts** - 15-second timeout prevents hanging requests
-- 🔄 **Auto-refresh** - Dashboard and analytics update every 30 seconds
+- 🔄 **Auto-refresh** - Dashboard and analytics update every new click
 
 ## Tech Stack
 
@@ -159,10 +159,5 @@ npm run preview
 | `npm run build` | Build for production |
 | `npm run preview` | Preview production build |
 
-## License
-
-MIT
-
----
 
 **BrevioLink** - Built with ❤️ for content creators everywhere.

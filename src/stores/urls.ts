@@ -200,7 +200,9 @@ export const useUrlStore = defineStore('urls', () => {
 
         if (!existing) return // Available
 
-        const isExpired = existing.expires_at && new Date(existing.expires_at) < new Date()
+        const now = new Date()
+        const expiresAt = existing.expires_at ? new Date(existing.expires_at) : null
+        const isExpired = expiresAt && expiresAt < now
 
         if (isExpired) {
             // Try to reclaim expired alias
@@ -214,7 +216,19 @@ export const useUrlStore = defineStore('urls', () => {
                 throw new Error(`Could not claim alias '${shortCode}'. It may have been renewed.`)
             }
         } else {
-            throw new Error(`Custom alias '${shortCode}' is already taken.`)
+            // Alias is taken. Check if it will expire.
+            if (expiresAt) {
+                const diffMs = expiresAt.getTime() - now.getTime()
+                const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+                const diffHours = Math.ceil(diffMs / (1000 * 60 * 60))
+
+                let timeMsg = `${diffDays} días`
+                if (diffDays <= 1) timeMsg = `${diffHours} horas`
+
+                throw new Error(`El alias '${shortCode}' está ocupado. Estará disponible en aprox. ${timeMsg}.`)
+            }
+
+            throw new Error(`El alias '${shortCode}' ya está en uso por un usuario Pro (Permanente).`)
         }
     }
 
@@ -337,13 +351,53 @@ export const useUrlStore = defineStore('urls', () => {
         }
 
         // Check for duplicate URL (return existing if found)
-        const existingUrl = await findExistingUrlForUser(originalUrl, user.id)
-        if (existingUrl) {
-            // Move to top of list
-            const idx = urls.value.findIndex(u => u.id === existingUrl.id)
-            if (idx !== -1) urls.value.splice(idx, 1)
-            urls.value.unshift(existingUrl)
-            return existingUrl
+        // CASE 3: Only check for existing URL if NO custom alias is provided.
+        // If custom alias IS provided, we ignore existing URLs and try to create a new one (unless that specific alias exists).
+        if (!customAlias) {
+            const existingUrl = await findExistingUrlForUser(originalUrl, user.id)
+            if (existingUrl) {
+                // CASE 2: Update title if changed
+                if (title && existingUrl.title !== title) {
+                    const { error: updateError } = await supabase
+                        .from('urls')
+                        .update({ title })
+                        .eq('id', existingUrl.id)
+
+                    if (!updateError) {
+                        existingUrl.title = title
+                        // Update local state
+                        const idx = urls.value.findIndex(u => u.id === existingUrl.id)
+                        if (idx !== -1 && urls.value[idx]) {
+                            urls.value[idx].title = title
+                        }
+                    }
+                }
+
+                // Move to top of list
+                const idx = urls.value.findIndex(u => u.id === existingUrl.id)
+                if (idx !== -1) urls.value.splice(idx, 1)
+                urls.value.unshift(existingUrl)
+                return existingUrl
+            }
+        } else {
+            // If custom alias provided, check if WE already own this specific alias for this URL
+            // (To handle case where user re-enters same successful custom alias for same URL -> should be idempotent)
+            // Although ensureShortCodeAvailable checks availability, it's good UX to return existing if exact match.
+            const existingWithAlias = urls.value.find(u => u.shortCode === customAlias && u.originalUrl === originalUrl)
+            if (existingWithAlias) {
+                // CASE 2: Update title if changed (consistency)
+                if (title && existingWithAlias.title !== title) {
+                    const { error: updateError } = await supabase
+                        .from('urls')
+                        .update({ title })
+                        .eq('id', existingWithAlias.id)
+
+                    if (!updateError) {
+                        existingWithAlias.title = title
+                    }
+                }
+                return existingWithAlias
+            }
         }
 
         // Ensure short code is available
