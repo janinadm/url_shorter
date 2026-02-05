@@ -99,7 +99,7 @@
             <button 
               type="submit" 
               class="btn btn--primary"
-              :disabled="!canCreate || creating"
+              :disabled="!canCreate || creating || !!error"
             >
               {{ creating ? 'Creating...' : 'Shorten' }}
             </button>
@@ -331,7 +331,7 @@ onMounted(() => {
   }
 })
 
-// Also watch for auth changes (handles login redirect)
+// Watch for auth changes (handles login redirect)
 watch(
   () => authStore.user,
   (user, oldUser) => {
@@ -339,6 +339,14 @@ watch(
     if (user && !oldUser) {
       urlStore.fetchUrls()
     }
+  }
+)
+
+// Clear error when user types
+watch(
+  [() => newUrl.url, () => newUrl.customAlias],
+  () => {
+    if (error.value) error.value = ''
   }
 )
 </script>

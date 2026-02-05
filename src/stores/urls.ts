@@ -361,65 +361,88 @@ export const useUrlStore = defineStore('urls', () => {
         // CASE 3: Only check for existing URL if NO custom alias is provided.
         // If custom alias IS provided, we ignore existing URLs and try to create a new one (unless that specific alias exists).
         // Check for duplicate URL (return existing if found)
-        // CASE 3: Only check for existing URL if NO custom alias is provided.
-        // If custom alias IS provided, we ignore existing URLs and try to create a new one (unless that specific alias exists).
-        if (!customAlias) {
-            const existingUrl = await findExistingUrlForUser(originalUrl, user.id)
-            if (existingUrl) {
-                // CASE 2: Update title if changed
-                if (title && existingUrl.title !== title) {
-                    const { error: updateError } = await supabase
-                        .from('urls')
-                        .update({ title })
-                        .eq('id', existingUrl.id)
 
-                    if (!updateError) {
-                        existingUrl.title = title
+        // --- PRIORITY 1: Handle Custom Alias Specifics (Anti-Squatting & Ownership) ---
+        if (customAlias) {
+            const existingWithAlias = urls.value.find(u => u.shortCode === customAlias)
 
-                        // Update local state and PRESERVE clicks
-                        // We must find the item in local state to get the current click count
-                        // because existingUrl from DB might just have the raw count or 0 depending on mapToShortUrl usage
-                        const idx = urls.value.findIndex(u => u.id === existingUrl.id)
-                        if (idx !== -1 && urls.value[idx]) {
-                            urls.value[idx].title = title
-                            // IMPORTANT: Preserve the clicks from the store state
-                            existingUrl.clicks = urls.value[idx].clicks
+            // If we found it in local state, it means we own it
+            if (existingWithAlias) {
+                const isExpired = existingWithAlias.expiresAt && new Date(existingWithAlias.expiresAt) < new Date()
+
+                // CRITICAL: Block Free users from reclaiming OWN expired alias (Anti-Squatting)
+                if (isExpired && user.plan === 'free') {
+                    throw new Error(`Los usuarios Free no pueden "renovar" un alias expirado ('${customAlias}'). Actualiza a Pro para mantener tus links para siempre o usa un alias nuevo.`)
+                }
+
+                // If active and matches original URL -> It's B2.1 or B2.2 (Return/Update Title)
+                if (existingWithAlias.originalUrl === originalUrl) {
+                    // CASE 2: Update title if changed (consistency)
+                    if (title && existingWithAlias.title !== title) {
+                        const { error: updateError } = await supabase
+                            .from('urls')
+                            .update({ title })
+                            .eq('id', existingWithAlias.id)
+
+                        if (!updateError) {
+                            existingWithAlias.title = title
                         }
                     }
-                } else {
-                    // If we didn't update title, we still want to ensure we return an object with correct clicks
-                    const existingInStore = urls.value.find(u => u.id === existingUrl.id)
-                    if (existingInStore) {
-                        // Preserve clicks from store
-                        existingUrl.clicks = existingInStore.clicks
-                    }
+                    return existingWithAlias
                 }
 
-                // Move to top of list
-                const idx = urls.value.findIndex(u => u.id === existingUrl.id)
-                if (idx !== -1) urls.value.splice(idx, 1)
-
-                urls.value.unshift(existingUrl)
-                return existingUrl
+                // If active but DIFFERENT URL -> B2.3 (Future Bio Page)
+                // For now, fall through to 'ensureShortCodeAvailable' which will throw "Alias Taken"
+                // Or explicit error here if not expired:
+                if (!isExpired) {
+                    throw new Error(`Ya utilizas el alias '${customAlias}' para otra URL.`)
+                }
             }
-        } else {
-            // If custom alias provided, check if WE already own this specific alias for this URL
-            // (To handle case where user re-enters same successful custom alias for same URL -> should be idempotent)
-            // Although ensureShortCodeAvailable checks availability, it's good UX to return existing if exact match.
-            const existingWithAlias = urls.value.find(u => u.shortCode === customAlias && u.originalUrl === originalUrl)
-            if (existingWithAlias) {
-                // CASE 2: Update title if changed (consistency)
-                if (title && existingWithAlias.title !== title) {
-                    const { error: updateError } = await supabase
-                        .from('urls')
-                        .update({ title })
-                        .eq('id', existingWithAlias.id)
+        }
 
-                    if (!updateError) {
-                        existingWithAlias.title = title
+        // --- PRIORITY 2: General Availability Check ---
+        // This handles "Taken by other", "Expired & Reclaimable (if not mine)", etc.
+        await ensureShortCodeAvailable(shortCode)
+
+        // --- PRIORITY 3: Duplicate URL Check (Only if NO custom alias) ---
+        if (!customAlias) {
+            const existingUrl = await findExistingUrlForUser(originalUrl, user.id)
+
+            if (existingUrl) {
+                const isExpired = existingUrl.expiresAt && new Date(existingUrl.expiresAt) < new Date()
+
+                // Only reuse if NOT expired. If expired, we treat as new (A3)
+                if (!isExpired) {
+                    // CASE 2: Update title if changed
+                    if (title && existingUrl.title !== title) {
+                        const { error: updateError } = await supabase
+                            .from('urls')
+                            .update({ title })
+                            .eq('id', existingUrl.id)
+
+                        if (!updateError) {
+                            existingUrl.title = title
+
+                            // Update local state and PRESERVE clicks
+                            const idx = urls.value.findIndex(u => u.id === existingUrl.id)
+                            if (idx !== -1 && urls.value[idx]) {
+                                urls.value[idx].title = title
+                                existingUrl.clicks = urls.value[idx].clicks
+                            }
+                        }
+                    } else {
+                        // Preserve clicks if returning existing
+                        const existingInStore = urls.value.find(u => u.id === existingUrl.id)
+                        if (existingInStore) existingUrl.clicks = existingInStore.clicks
                     }
+
+                    // Move to top
+                    const idx = urls.value.findIndex(u => u.id === existingUrl.id)
+                    if (idx !== -1) urls.value.splice(idx, 1)
+                    urls.value.unshift(existingUrl)
+                    return existingUrl
                 }
-                return existingWithAlias
+                // If expired, we ignore `existingUrl` and proceed to create NEW one (A3)
             }
         }
 
