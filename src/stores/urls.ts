@@ -194,7 +194,7 @@ export const useUrlStore = defineStore('urls', () => {
     async function ensureShortCodeAvailable(shortCode: string): Promise<void> {
         const { data: existing } = await supabase
             .from('urls')
-            .select('id, expires_at')
+            .select('id, expires_at, user_id')
             .eq('short_code', shortCode)
             .maybeSingle()
 
@@ -205,6 +205,13 @@ export const useUrlStore = defineStore('urls', () => {
         const isExpired = expiresAt && expiresAt < now
 
         if (isExpired) {
+            // Anti-Squatting: Free users cannot reclaim their OWN expired aliases
+            // This prevents them from just deleting/recreating to extend the 3 days indefinitely
+            const authStore = useAuthStore()
+            if (authStore.user?.plan === 'free' && existing.user_id === authStore.user.id) {
+                throw new Error(`Los usuarios Free no pueden "renovar" un alias expirado ('${shortCode}'). Actualiza a Pro para mantener tus links para siempre o usa un alias nuevo.`)
+            }
+
             // Try to reclaim expired alias
             const { data: claimed, error: claimError } = await supabase
                 .rpc('claim_expired_alias', { target_short_code: shortCode })
