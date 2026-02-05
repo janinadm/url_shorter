@@ -353,6 +353,9 @@ export const useUrlStore = defineStore('urls', () => {
         // Check for duplicate URL (return existing if found)
         // CASE 3: Only check for existing URL if NO custom alias is provided.
         // If custom alias IS provided, we ignore existing URLs and try to create a new one (unless that specific alias exists).
+        // Check for duplicate URL (return existing if found)
+        // CASE 3: Only check for existing URL if NO custom alias is provided.
+        // If custom alias IS provided, we ignore existing URLs and try to create a new one (unless that specific alias exists).
         if (!customAlias) {
             const existingUrl = await findExistingUrlForUser(originalUrl, user.id)
             if (existingUrl) {
@@ -365,17 +368,30 @@ export const useUrlStore = defineStore('urls', () => {
 
                     if (!updateError) {
                         existingUrl.title = title
-                        // Update local state
+
+                        // Update local state and PRESERVE clicks
+                        // We must find the item in local state to get the current click count
+                        // because existingUrl from DB might just have the raw count or 0 depending on mapToShortUrl usage
                         const idx = urls.value.findIndex(u => u.id === existingUrl.id)
                         if (idx !== -1 && urls.value[idx]) {
                             urls.value[idx].title = title
+                            // IMPORTANT: Preserve the clicks from the store state
+                            existingUrl.clicks = urls.value[idx].clicks
                         }
+                    }
+                } else {
+                    // If we didn't update title, we still want to ensure we return an object with correct clicks
+                    const existingInStore = urls.value.find(u => u.id === existingUrl.id)
+                    if (existingInStore) {
+                        // Preserve clicks from store
+                        existingUrl.clicks = existingInStore.clicks
                     }
                 }
 
                 // Move to top of list
                 const idx = urls.value.findIndex(u => u.id === existingUrl.id)
                 if (idx !== -1) urls.value.splice(idx, 1)
+
                 urls.value.unshift(existingUrl)
                 return existingUrl
             }
