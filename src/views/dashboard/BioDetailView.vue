@@ -404,6 +404,7 @@ $sidebar-width: 260px;
 
 .content {
   padding: $spacing-6;
+  max-width: 900px;
 }
 
 .loading,
@@ -487,6 +488,7 @@ $sidebar-width: 260px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: $spacing-3;
   padding: $spacing-3;
   border: 1px solid $gray-200;
   border-radius: $radius-md;
@@ -499,18 +501,21 @@ $sidebar-width: 260px;
   &__info {
     min-width: 0;
     flex: 1;
+    overflow: hidden;
   }
 
   &__title {
     font-weight: $font-weight-medium;
     color: $gray-900;
     margin-bottom: $spacing-1;
+    @include truncate;
   }
 
   &__url {
     font-size: $font-size-sm;
     color: $gray-500;
     @include truncate;
+    max-width: 100%;
   }
 }
 
