@@ -125,6 +125,10 @@
               class="bio-card"
               @click="router.push(`/dashboard/bio/${group.id}`)"
             >
+              <div class="bio-card__avatar">
+                <img v-if="group.avatarUrl" :src="group.avatarUrl" :alt="group.title" />
+                <span v-else>{{ group.title?.[0]?.toUpperCase() || 'B' }}</span>
+              </div>
               <div class="bio-card__main">
                 <h3 class="bio-card__title">{{ group.title }}</h3>
                 <p class="bio-card__slug">{{ baseUrl }}/g/{{ group.slug }}</p>
@@ -693,6 +697,25 @@ $sidebar-width: 260px;
   &:hover {
     border-color: $primary-light;
     box-shadow: $shadow-sm;
+  }
+
+  &__avatar {
+    @include flex-center;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    background: $gradient-primary;
+    border-radius: $radius-full;
+    color: $white;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-lg;
+    overflow: hidden;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
   }
 
   &__main {
