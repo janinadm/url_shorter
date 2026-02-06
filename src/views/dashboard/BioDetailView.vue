@@ -353,6 +353,7 @@ $sidebar-width: 260px;
   margin-left: $sidebar-width;
   background: $gray-50;
   min-height: 100vh;
+  overflow-x: hidden;
 
   @media (max-width: $breakpoint-md) {
     margin-left: 0;
@@ -404,6 +405,9 @@ $sidebar-width: 260px;
 
 .content {
   padding: $spacing-6;
+  overflow-x: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .loading,
@@ -513,8 +517,11 @@ $sidebar-width: 260px;
   &__url {
     font-size: $font-size-sm;
     color: $gray-500;
-    @include truncate;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     max-width: 100%;
+    display: block;
   }
 }
 
