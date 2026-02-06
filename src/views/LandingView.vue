@@ -215,7 +215,7 @@
           </div>
         </div>
         <div class="footer__bottom">
-          <p>© 2024 Brevio. All rights reserved.</p>
+          <p>© 2026 Janina Dorobantu. All rights reserved.</p>
         </div>
       </div>
     </footer>
