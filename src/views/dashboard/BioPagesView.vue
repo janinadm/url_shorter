@@ -49,12 +49,17 @@
         <!-- Create Bio Page Form -->
         <div class="create-bio">
           <h2 class="create-bio__title">Create new Bio Page</h2>
-          <form @submit.prevent="handleCreateGroup" class="create-bio__form">
+          <p v-if="!canCreateGroup" class="create-bio__limit">
+            Free users can only create 1 Bio Page. 
+            <router-link to="/dashboard/settings">Upgrade to Pro</router-link>
+          </p>
+          <form @submit.prevent="handleCreateGroup" class="create-bio__form" :class="{ 'create-bio__form--disabled': !canCreateGroup }">
             <input
               v-model="newGroup.title"
               type="text"
               placeholder="Page title (e.g., My Portfolio)"
               class="create-bio__input"
+              :disabled="!canCreateGroup"
               required
             />
             <div class="create-bio__row">
@@ -64,20 +69,26 @@
                 type="text"
                 placeholder="my-page"
                 class="create-bio__input create-bio__input--slug"
+                :class="{ 'create-bio__input--error': slugError, 'create-bio__input--success': slugAvailable }"
                 minlength="3"
                 maxlength="20"
                 pattern="[a-z0-9-]+"
                 title="Lowercase letters, numbers, and hyphens only"
+                :disabled="!canCreateGroup"
+                @input="checkSlugAvailability"
                 required
               />
             </div>
+            <p v-if="slugError" class="create-bio__slug-error">{{ slugError }}</p>
+            <p v-if="slugAvailable && newGroup.slug.length >= 3" class="create-bio__slug-success">✓ Slug available</p>
             <textarea
               v-model="newGroup.description"
               placeholder="Short bio (optional)"
               class="create-bio__input create-bio__input--textarea"
               rows="2"
+              :disabled="!canCreateGroup"
             ></textarea>
-            <div class="create-bio__avatar-upload">
+            <div class="create-bio__avatar-upload" v-if="canCreateGroup">
               <div class="create-bio__avatar-preview" v-if="newGroup.avatarUrl">
                 <img :src="newGroup.avatarUrl" alt="Avatar preview" />
                 <button type="button" class="create-bio__avatar-remove" @click="removeAvatar">×</button>
@@ -97,16 +108,12 @@
             <button 
               type="submit" 
               class="btn btn--gradient"
-              :disabled="!canCreateGroup || creating"
+              :disabled="!canCreateGroup || creating || !!slugError || checkingSlug"
             >
               {{ creating ? 'Creating...' : 'Create Bio Page' }}
             </button>
             <p v-if="error" class="create-bio__error">{{ error }}</p>
           </form>
-          <p v-if="!canCreateGroup" class="create-bio__limit">
-            Free users can only create 1 Bio Page. 
-            <router-link to="/dashboard/settings">Upgrade to Pro</router-link>
-          </p>
         </div>
 
         <!-- Bio Pages List -->
@@ -204,6 +211,11 @@ const copied = ref('')
 const error = ref('')
 const sidebarOpen = ref(false)
 
+// Slug availability check
+const slugError = ref('')
+const slugAvailable = ref(false)
+const checkingSlug = ref(false)
+let slugCheckTimeout: number | null = null
 const deleteDialog = reactive({
   open: false,
   loading: false,
@@ -258,6 +270,59 @@ function copyBioUrl(slug: string) {
 
 function removeAvatar() {
   newGroup.avatarUrl = ''
+}
+
+async function checkSlugAvailability() {
+  // Clear previous timeout
+  if (slugCheckTimeout) {
+    clearTimeout(slugCheckTimeout)
+  }
+  
+  slugError.value = ''
+  slugAvailable.value = false
+  
+  const slug = newGroup.slug.trim().toLowerCase()
+  
+  // Basic validation
+  if (slug.length < 3) {
+    return
+  }
+  
+  if (!/^[a-z0-9-]+$/.test(slug)) {
+    slugError.value = 'Only lowercase letters, numbers, and hyphens allowed'
+    return
+  }
+  
+  // Debounce the API call
+  checkingSlug.value = true
+  slugCheckTimeout = window.setTimeout(async () => {
+    try {
+      const result = await groupStore.checkSlugExists(slug)
+      
+      if (result.exists) {
+        if (result.expiresAt) {
+          const expirationDate = new Date(result.expiresAt)
+          const now = new Date()
+          const hoursLeft = Math.max(0, Math.ceil((expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60)))
+          
+          if (hoursLeft > 0) {
+            slugError.value = `Slug "${slug}" is taken. Will be available in ~${hoursLeft}h`
+          } else {
+            slugError.value = `Slug "${slug}" is taken but will be available soon`
+          }
+        } else {
+          slugError.value = `Slug "${slug}" is already taken`
+        }
+        slugAvailable.value = false
+      } else {
+        slugAvailable.value = true
+      }
+    } catch (e) {
+      console.error('Error checking slug:', e)
+    } finally {
+      checkingSlug.value = false
+    }
+  }, 400)
 }
 
 function handleAvatarSelect(event: Event) {
@@ -547,7 +612,7 @@ $sidebar-width: 260px;
   }
 
   &__limit {
-    margin-top: $spacing-4;
+    margin-bottom: $spacing-4;
     padding: $spacing-3;
     background: $warning-light;
     color: $warning-dark;
@@ -558,6 +623,41 @@ $sidebar-width: 260px;
     a {
       color: $warning-dark;
       font-weight: $font-weight-bold;
+    }
+  }
+
+  &__slug-error {
+    color: $error;
+    font-size: $font-size-sm;
+    margin-top: $spacing-1;
+    margin-bottom: $spacing-2;
+  }
+
+  &__slug-success {
+    color: $success;
+    font-size: $font-size-sm;
+    margin-top: $spacing-1;
+    margin-bottom: $spacing-2;
+  }
+
+  &__form--disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  &__input--error {
+    border-color: $error !important;
+    
+    &:focus {
+      box-shadow: 0 0 0 3px rgba($error, 0.1);
+    }
+  }
+
+  &__input--success {
+    border-color: $success !important;
+    
+    &:focus {
+      box-shadow: 0 0 0 3px rgba($success, 0.1);
     }
   }
 

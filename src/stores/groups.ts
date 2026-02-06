@@ -119,6 +119,41 @@ export const useGroupStore = defineStore('groups', () => {
     }
 
     /**
+     * Check if a slug already exists (for validation)
+     * Returns { exists: boolean, expiresAt?: string }
+     */
+    async function checkSlugExists(slug: string): Promise<{ exists: boolean, expiresAt?: string }> {
+        if (!isSupabaseConfigured) return { exists: false }
+
+        try {
+            const { data, error: fetchError } = await supabase
+                .from('link_groups')
+                .select('id, expires_at')
+                .eq('slug', slug)
+                .maybeSingle()
+
+            if (fetchError) throw fetchError
+
+            if (!data) {
+                return { exists: false }
+            }
+
+            // Check if it has expired
+            if (data.expires_at && new Date(data.expires_at) < new Date()) {
+                return { exists: false } // Expired, so available
+            }
+
+            return {
+                exists: true,
+                expiresAt: data.expires_at || undefined
+            }
+        } catch (e: any) {
+            console.error('Failed to check slug:', e)
+            return { exists: false }
+        }
+    }
+
+    /**
      * Create a new group
      */
     async function createGroup(
@@ -278,6 +313,7 @@ export const useGroupStore = defineStore('groups', () => {
         fetchGroups,
         fetchGroupById,
         fetchGroupBySlug,
+        checkSlugExists,
         createGroup,
         updateGroup,
         deleteGroup,
