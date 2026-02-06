@@ -13,6 +13,10 @@
           <span class="sidebar__link-icon"><LayoutDashboard :size="20" /></span>
           Dashboard
         </router-link>
+        <router-link to="/dashboard/bio" class="sidebar__link" :class="{ 'sidebar__link--active': isActive('bio-pages') }" @click="sidebarOpen = false">
+          <span class="sidebar__link-icon"><Users :size="20" /></span>
+          Bio Pages
+        </router-link>
         <router-link to="/dashboard/settings" class="sidebar__link" :class="{ 'sidebar__link--active': isActive('settings') }" @click="sidebarOpen = false">
           <span class="sidebar__link-icon"><Settings :size="20" /></span>
           Settings
@@ -209,7 +213,8 @@ import {
   Trash2, 
   AlertTriangle, 
   Copy, 
-  Check 
+  Check,
+  Users
 } from 'lucide-vue-next'
 
 const baseUrl = import.meta.env.VITE_BASE_URL || window.location.origin

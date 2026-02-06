@@ -191,7 +191,8 @@ export const useGroupStore = defineStore('groups', () => {
 
             const idx = groups.value.findIndex(g => g.id === id)
             if (idx !== -1) {
-                groups.value[idx] = { ...groups.value[idx], ...updates }
+                const current = groups.value[idx]!
+                groups.value[idx] = { ...current, ...updates }
             }
         } catch (e: any) {
             console.error('Failed to update group:', e)

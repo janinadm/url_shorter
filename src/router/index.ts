@@ -44,6 +44,23 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: true }
     },
     {
+        path: '/dashboard/bio',
+        name: 'bio-pages',
+        component: () => import('@/views/dashboard/BioPagesView.vue'),
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/dashboard/bio/:id',
+        name: 'bio-detail',
+        component: () => import('@/views/dashboard/BioDetailView.vue'),
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/g/:slug',
+        name: 'public-bio',
+        component: () => import('@/views/PublicBioView.vue')
+    },
+    {
         path: '/expired',
         name: 'expired',
         component: () => import('@/views/ExpiredView.vue')
