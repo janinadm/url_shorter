@@ -54,6 +54,7 @@ export interface LinkGroup {
   slug: string
   title: string
   description?: string
+  avatarUrl?: string   // Optional profile picture URL
   theme: 'default' | 'light' | 'dark'
   expiresAt?: string
   createdAt: string

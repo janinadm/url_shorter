@@ -21,6 +21,7 @@ export const useGroupStore = defineStore('groups', () => {
             slug: row.slug,
             title: row.title,
             description: row.description,
+            avatarUrl: row.avatar_url,
             theme: row.theme || 'default',
             expiresAt: row.expires_at,
             createdAt: row.created_at,
@@ -123,7 +124,8 @@ export const useGroupStore = defineStore('groups', () => {
     async function createGroup(
         slug: string,
         title: string,
-        description?: string
+        description?: string,
+        avatarUrl?: string
     ): Promise<LinkGroup | null> {
         if (!isSupabaseConfigured) return null
 
@@ -151,6 +153,7 @@ export const useGroupStore = defineStore('groups', () => {
                     slug,
                     title,
                     description,
+                    avatar_url: avatarUrl || null,
                     expires_at: authStore.user.plan === 'free'
                         ? new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
                         : null

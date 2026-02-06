@@ -13,7 +13,8 @@
     <template v-else>
       <header class="bio-header">
         <div class="bio-header__avatar">
-          {{ group.title?.[0]?.toUpperCase() || 'B' }}
+          <img v-if="group.avatarUrl" :src="group.avatarUrl" :alt="group.title" class="bio-header__avatar-img" />
+          <span v-else>{{ group.title?.[0]?.toUpperCase() || 'B' }}</span>
         </div>
         <h1 class="bio-header__title">{{ group.title }}</h1>
         <p v-if="group.description" class="bio-header__description">{{ group.description }}</p>
@@ -40,7 +41,7 @@
 
       <footer class="bio-footer">
         <router-link to="/" class="bio-footer__brand">
-          <Logo />
+          <Logo :light="true" />
         </router-link>
         <p class="bio-footer__tagline">Create your own Bio Page</p>
       </footer>
@@ -164,6 +165,13 @@ onMounted(fetchGroup)
     font-size: $font-size-3xl;
     font-weight: $font-weight-bold;
     backdrop-filter: blur(10px);
+    overflow: hidden;
+  }
+
+  &__avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   &__title {

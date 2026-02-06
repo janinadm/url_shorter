@@ -404,7 +404,6 @@ $sidebar-width: 260px;
 
 .content {
   padding: $spacing-6;
-  max-width: 900px;
 }
 
 .loading,

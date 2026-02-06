@@ -77,6 +77,12 @@
               class="create-bio__input create-bio__input--textarea"
               rows="2"
             ></textarea>
+            <input
+              v-model="newGroup.avatarUrl"
+              type="url"
+              placeholder="Avatar URL (optional, e.g., https://example.com/photo.jpg)"
+              class="create-bio__input"
+            />
             <button 
               type="submit" 
               class="btn btn--primary"
@@ -176,7 +182,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const groupStore = useGroupStore()
 
-const newGroup = reactive({ title: '', slug: '', description: '' })
+const newGroup = reactive({ title: '', slug: '', description: '', avatarUrl: '' })
 const creating = ref(false)
 const copied = ref('')
 const error = ref('')
@@ -211,12 +217,14 @@ async function handleCreateGroup() {
     const group = await groupStore.createGroup(
       newGroup.slug.toLowerCase(),
       newGroup.title,
-      newGroup.description || undefined
+      newGroup.description || undefined,
+      newGroup.avatarUrl || undefined
     )
     if (group) {
       newGroup.title = ''
       newGroup.slug = ''
       newGroup.description = ''
+      newGroup.avatarUrl = ''
       router.push(`/dashboard/bio/${group.id}`)
     }
   } catch (e: any) {
