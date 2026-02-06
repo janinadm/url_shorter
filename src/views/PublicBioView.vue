@@ -53,6 +53,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useGroupStore } from '@/stores/groups'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import Logo from '@/components/Logo.vue'
 import type { LinkGroup } from '@/types'
 import { ExternalLink } from 'lucide-vue-next'
@@ -70,9 +71,33 @@ async function fetchGroup() {
   loading.value = false
 }
 
-function trackClick(urlId: string) {
-  // Could implement click tracking here in the future
-  console.log('Bio link clicked:', urlId)
+/**
+ * Track click on a bio link by inserting into clicks table
+ */
+async function trackClick(urlId: string) {
+  if (!isSupabaseConfigured) return
+  
+  try {
+    // Get browser and referrer info
+    const userAgent = navigator.userAgent
+    let browser = 'Other'
+    if (userAgent.includes('Chrome')) browser = 'Chrome'
+    else if (userAgent.includes('Safari')) browser = 'Safari'
+    else if (userAgent.includes('Firefox')) browser = 'Firefox'
+    else if (userAgent.includes('Edge')) browser = 'Edge'
+    
+    const referrer = document.referrer || 'Direct'
+    
+    // Insert click record
+    await supabase.from('clicks').insert({
+      url_id: urlId,
+      browser,
+      referrer,
+      clicked_at: new Date().toISOString()
+    })
+  } catch (e) {
+    console.error('Failed to track click:', e)
+  }
 }
 
 onMounted(fetchGroup)
