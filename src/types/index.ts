@@ -16,6 +16,7 @@ export interface ShortUrl {
   expiresAt?: string  // null = permanent (Pro), date = expires (Free)
   createdAt: string
   clicks?: number
+  groupId?: string    // Optional reference to a LinkGroup
 }
 
 export interface ClickEvent {
@@ -46,3 +47,16 @@ export interface Plan {
   urlLimit: number
   features: string[]
 }
+
+export interface LinkGroup {
+  id: string
+  userId: string
+  slug: string
+  title: string
+  description?: string
+  theme: 'default' | 'light' | 'dark'
+  expiresAt?: string
+  createdAt: string
+  links?: ShortUrl[]  // Populated when fetching group with links
+}
+
