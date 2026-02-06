@@ -227,15 +227,12 @@ export const useUrlStore = defineStore('urls', () => {
             if (expiresAt) {
                 const diffMs = expiresAt.getTime() - now.getTime()
                 const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
-                const diffHours = Math.ceil(diffMs / (1000 * 60 * 60))
+                const timeMsg = `${diffDays} day${diffDays !== 1 ? 's' : ''}`
 
-                let timeMsg = `${diffDays} días`
-                if (diffDays <= 1) timeMsg = `${diffHours} horas`
-
-                throw new Error(`El alias '${shortCode}' está ocupado. Estará disponible en aprox. ${timeMsg}.`)
+                throw new Error(`The alias "${shortCode}" is taken. Will be available in ~${timeMsg}.`)
             }
 
-            throw new Error(`El alias '${shortCode}' ya está en uso por un usuario Pro (Permanente).`)
+            throw new Error(`The alias "${shortCode}" is in use by a Pro user (permanent).`)
         }
     }
 

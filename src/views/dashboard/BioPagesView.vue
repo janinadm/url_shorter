@@ -303,15 +303,16 @@ async function checkSlugAvailability() {
         if (result.expiresAt) {
           const expirationDate = new Date(result.expiresAt)
           const now = new Date()
-          const hoursLeft = Math.max(0, Math.ceil((expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60)))
+          const daysLeft = Math.max(0, Math.ceil((expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
           
-          if (hoursLeft > 0) {
-            slugError.value = `Slug "${slug}" is taken. Will be available in ~${hoursLeft}h`
+          if (daysLeft > 0) {
+            const dayText = `${daysLeft} day${daysLeft !== 1 ? 's' : ''}`
+            slugError.value = `Slug "${slug}" is taken. Will be available in ~${dayText}`
           } else {
             slugError.value = `Slug "${slug}" is taken but will be available soon`
           }
         } else {
-          slugError.value = `Slug "${slug}" is already taken`
+          slugError.value = `Slug "${slug}" is in use by a Pro user (permanent)`
         }
         slugAvailable.value = false
       } else {
