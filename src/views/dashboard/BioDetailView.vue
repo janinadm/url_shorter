@@ -52,17 +52,56 @@
           <!-- Group Info -->
           <div class="group-info">
             <div class="group-info__header">
-              <div>
-                <h2 class="group-info__title">{{ group.title }}</h2>
-                <p class="group-info__slug">
-                  <a :href="`${baseUrl}/g/${group.slug}`" target="_blank">{{ baseUrl }}/g/{{ group.slug }}</a>
-                </p>
-                <p v-if="group.description" class="group-info__description">{{ group.description }}</p>
+              <div class="group-info__avatar-section">
+                <div class="group-info__avatar" @click="editMode && triggerAvatarUpload()">
+                  <img v-if="editForm.avatarUrl || group.avatarUrl" :src="editForm.avatarUrl || group.avatarUrl" alt="Avatar" class="group-info__avatar-img" />
+                  <span v-else class="group-info__avatar-initial">{{ group.title?.[0]?.toUpperCase() || 'B' }}</span>
+                  <div v-if="editMode" class="group-info__avatar-overlay">
+                    <Camera :size="20" />
+                  </div>
+                </div>
+                <input 
+                  ref="avatarInput"
+                  type="file" 
+                  accept="image/*" 
+                  class="hidden-input"
+                  @change="handleAvatarUpload"
+                />
               </div>
-              <button @click="copyBioUrl" class="btn btn--secondary">
-                <Copy :size="16" />
-                {{ copied ? 'Copied!' : 'Copy Link' }}
-              </button>
+              <div class="group-info__details">
+                <template v-if="editMode">
+                  <input v-model="editForm.title" type="text" class="edit-input edit-input--title" placeholder="Page title" />
+                  <p class="group-info__slug">
+                    <a :href="`${baseUrl}/g/${group.slug}`" target="_blank">{{ baseUrl }}/g/{{ group.slug }}</a>
+                  </p>
+                  <textarea v-model="editForm.description" class="edit-input edit-input--textarea" placeholder="Short bio (optional)" rows="2"></textarea>
+                </template>
+                <template v-else>
+                  <h2 class="group-info__title">{{ group.title }}</h2>
+                  <p class="group-info__slug">
+                    <a :href="`${baseUrl}/g/${group.slug}`" target="_blank">{{ baseUrl }}/g/{{ group.slug }}</a>
+                  </p>
+                  <p v-if="group.description" class="group-info__description">{{ group.description }}</p>
+                </template>
+              </div>
+              <div class="group-info__actions">
+                <template v-if="editMode">
+                  <button @click="saveEdit" class="btn btn--primary btn--small" :disabled="saving">
+                    {{ saving ? 'Saving...' : 'Save' }}
+                  </button>
+                  <button @click="cancelEdit" class="btn btn--secondary btn--small">Cancel</button>
+                </template>
+                <template v-else>
+                  <button @click="startEdit" class="btn btn--secondary btn--small">
+                    <Pencil :size="16" />
+                    Edit
+                  </button>
+                  <button @click="copyBioUrl" class="btn btn--secondary btn--small">
+                    <Copy :size="16" />
+                    {{ copied ? 'Copied!' : 'Copy Link' }}
+                  </button>
+                </template>
+              </div>
             </div>
           </div>
 
@@ -136,7 +175,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useGroupStore } from '@/stores/groups'
@@ -149,7 +188,9 @@ import {
   Menu, 
   Users,
   ArrowLeft,
-  Copy
+  Copy,
+  Camera,
+  Pencil
 } from 'lucide-vue-next'
 
 const baseUrl = import.meta.env.VITE_BASE_URL || window.location.origin
@@ -166,6 +207,16 @@ const copied = ref(false)
 const sidebarOpen = ref(false)
 const addingLink = ref<string | null>(null)
 const removingLink = ref<string | null>(null)
+
+// Edit mode state
+const editMode = ref(false)
+const saving = ref(false)
+const avatarInput = ref<HTMLInputElement | null>(null)
+const editForm = reactive({
+  title: '',
+  description: '',
+  avatarUrl: ''
+})
 
 const userInitial = computed(() => 
   (authStore.user?.name?.[0] || authStore.user?.email?.[0] || 'U').toUpperCase()
@@ -215,6 +266,58 @@ async function handleRemoveLink(urlId: string) {
   } finally {
     removingLink.value = null
   }
+}
+
+// Edit mode functions
+function startEdit() {
+  if (!group.value) return
+  editForm.title = group.value.title
+  editForm.description = group.value.description || ''
+  editForm.avatarUrl = group.value.avatarUrl || ''
+  editMode.value = true
+}
+
+function cancelEdit() {
+  editMode.value = false
+  editForm.title = ''
+  editForm.description = ''
+  editForm.avatarUrl = ''
+}
+
+async function saveEdit() {
+  if (!group.value) return
+  saving.value = true
+  try {
+    await groupStore.updateGroup(group.value.id, {
+      title: editForm.title,
+      description: editForm.description || undefined,
+      avatarUrl: editForm.avatarUrl || undefined
+    })
+    await fetchGroup()
+    editMode.value = false
+  } finally {
+    saving.value = false
+  }
+}
+
+function triggerAvatarUpload() {
+  avatarInput.value?.click()
+}
+
+async function handleAvatarUpload(event: Event) {
+  const input = event.target as HTMLInputElement
+  if (!input.files?.length) return
+  
+  const file = input.files[0]
+  if (!file) return
+  
+  // For now, convert to base64 data URL (simple approach without storage)
+  // In production, you'd upload to Supabase Storage
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    editForm.avatarUrl = e.target?.result as string
+  }
+  reader.readAsDataURL(file)
 }
 
 onMounted(async () => {
@@ -424,10 +527,56 @@ $sidebar-width: 260px;
 
   &__header {
     display: flex;
-    justify-content: space-between;
     align-items: flex-start;
     gap: $spacing-4;
     flex-wrap: wrap;
+  }
+
+  &__avatar-section {
+    flex-shrink: 0;
+  }
+
+  &__avatar {
+    @include flex-center;
+    width: 64px;
+    height: 64px;
+    background: $gradient-primary;
+    border-radius: $radius-full;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: $white;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  &__avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &__avatar-initial {
+    font-size: $font-size-xl;
+  }
+
+  &__avatar-overlay {
+    position: absolute;
+    inset: 0;
+    @include flex-center;
+    background: rgba(0, 0, 0, 0.5);
+    color: $white;
+    opacity: 0;
+    transition: opacity $transition-fast;
+  }
+
+  &__avatar:hover &__avatar-overlay {
+    opacity: 1;
+  }
+
+  &__details {
+    flex: 1;
+    min-width: 0;
   }
 
   &__title {
@@ -453,6 +602,46 @@ $sidebar-width: 260px;
   &__description {
     font-size: $font-size-sm;
     color: $gray-600;
+  }
+
+  &__actions {
+    display: flex;
+    gap: $spacing-2;
+    flex-shrink: 0;
+  }
+}
+
+.hidden-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.edit-input {
+  width: 100%;
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid $gray-300;
+  border-radius: $radius-md;
+  font-size: $font-size-base;
+  transition: all $transition-fast;
+
+  &:focus {
+    outline: none;
+    border-color: $primary;
+    box-shadow: 0 0 0 3px rgba($primary, 0.1);
+  }
+
+  &--title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    margin-bottom: $spacing-2;
+  }
+
+  &--textarea {
+    resize: vertical;
+    min-height: 60px;
   }
 }
 

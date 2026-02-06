@@ -182,12 +182,19 @@ export const useGroupStore = defineStore('groups', () => {
      */
     async function updateGroup(
         id: string,
-        updates: Partial<Pick<LinkGroup, 'title' | 'description' | 'theme'>>
+        updates: Partial<Pick<LinkGroup, 'title' | 'description' | 'theme' | 'avatarUrl'>>
     ): Promise<void> {
         try {
+            // Map to DB column names
+            const dbUpdates: Record<string, unknown> = {}
+            if (updates.title !== undefined) dbUpdates.title = updates.title
+            if (updates.description !== undefined) dbUpdates.description = updates.description
+            if (updates.theme !== undefined) dbUpdates.theme = updates.theme
+            if (updates.avatarUrl !== undefined) dbUpdates.avatar_url = updates.avatarUrl
+
             const { error: updateError } = await supabase
                 .from('link_groups')
-                .update(updates)
+                .update(dbUpdates)
                 .eq('id', id)
 
             if (updateError) throw updateError
