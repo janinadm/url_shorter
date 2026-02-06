@@ -77,15 +77,26 @@
               class="create-bio__input create-bio__input--textarea"
               rows="2"
             ></textarea>
-            <input
-              v-model="newGroup.avatarUrl"
-              type="url"
-              placeholder="Avatar URL (optional, e.g., https://example.com/photo.jpg)"
-              class="create-bio__input"
-            />
+            <div class="create-bio__avatar-upload">
+              <div class="create-bio__avatar-preview" v-if="newGroup.avatarUrl">
+                <img :src="newGroup.avatarUrl" alt="Avatar preview" />
+                <button type="button" class="create-bio__avatar-remove" @click="removeAvatar">×</button>
+              </div>
+              <label class="create-bio__avatar-btn">
+                <Upload :size="16" />
+                {{ newGroup.avatarUrl ? 'Change Photo' : 'Add Profile Photo' }}
+                <input 
+                  ref="createAvatarInput"
+                  type="file" 
+                  accept="image/*" 
+                  class="hidden-input"
+                  @change="handleAvatarSelect"
+                />
+              </label>
+            </div>
             <button 
               type="submit" 
-              class="btn btn--primary"
+              class="btn btn--gradient"
               :disabled="!canCreateGroup || creating"
             >
               {{ creating ? 'Creating...' : 'Create Bio Page' }}
@@ -173,7 +184,8 @@ import {
   Users,
   Copy, 
   Check,
-  Trash2
+  Trash2,
+  Upload
 } from 'lucide-vue-next'
 
 const baseUrl = import.meta.env.VITE_BASE_URL || window.location.origin
@@ -238,6 +250,24 @@ function copyBioUrl(slug: string) {
   navigator.clipboard.writeText(`${baseUrl}/g/${slug}`)
   copied.value = slug
   setTimeout(() => { copied.value = '' }, 2000)
+}
+
+function removeAvatar() {
+  newGroup.avatarUrl = ''
+}
+
+function handleAvatarSelect(event: Event) {
+  const input = event.target as HTMLInputElement
+  if (!input.files?.length) return
+  
+  const file = input.files[0]
+  if (!file) return
+  
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    newGroup.avatarUrl = e.target?.result as string
+  }
+  reader.readAsDataURL(file)
 }
 
 function confirmDeleteGroup(id: string) {
@@ -525,6 +555,98 @@ $sidebar-width: 260px;
       color: $warning-dark;
       font-weight: $font-weight-bold;
     }
+  }
+
+  &__avatar-upload {
+    display: flex;
+    align-items: center;
+    gap: $spacing-4;
+  }
+
+  &__avatar-preview {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    border-radius: $radius-full;
+    overflow: hidden;
+    flex-shrink: 0;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__avatar-remove {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 20px;
+    height: 20px;
+    background: $error;
+    color: $white;
+    border: none;
+    border-radius: $radius-full;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    @include flex-center;
+
+    &:hover {
+      background: darken($error, 10%);
+    }
+  }
+
+  &__avatar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-2;
+    padding: $spacing-2 $spacing-4;
+    background: $gray-100;
+    border: 1px dashed $gray-400;
+    border-radius: $radius-md;
+    color: $gray-600;
+    font-size: $font-size-sm;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+      border-color: $primary;
+      color: $primary;
+      background: rgba($primary, 0.05);
+    }
+  }
+}
+
+.hidden-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.btn--gradient {
+  width: 100%;
+  padding: $spacing-3 $spacing-6;
+  background: $gradient-primary;
+  border: none;
+  border-radius: $radius-lg;
+  color: $white;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: $shadow-md;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }
 
