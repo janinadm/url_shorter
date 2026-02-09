@@ -90,7 +90,7 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
-@use '@/assets/styles/variables' as *;
+@use '@/assets/scss/variables' as *;
 
 .callback {
   text-align: center;
