@@ -134,7 +134,7 @@
               @click="router.push(`/dashboard/bio/${group.id}`)"
             >
               <div class="bio-card__avatar">
-                <img v-if="group.avatarUrl" :src="group.avatarUrl" :alt="group.title" />
+                <img v-if="group.avatarUrl" :src="group.avatarUrl" :alt="group.title" loading="lazy" />
                 <span v-else>{{ group.title?.[0]?.toUpperCase() || 'B' }}</span>
               </div>
               <div class="bio-card__main">
