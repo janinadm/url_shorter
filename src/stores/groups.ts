@@ -8,6 +8,7 @@ export const useGroupStore = defineStore('groups', () => {
     const groups = ref<LinkGroup[]>([])
     const loading = ref(false)
     const error = ref<string | null>(null)
+    const hasFetched = ref(false)
 
     const totalGroups = computed(() => groups.value.length)
 
@@ -48,12 +49,18 @@ export const useGroupStore = defineStore('groups', () => {
 
     /**
      * Fetch all groups for current user
+     * Uses caching to avoid redundant fetches - pass forceRefresh=true to bypass cache
      */
-    async function fetchGroups(): Promise<void> {
+    async function fetchGroups(forceRefresh = false): Promise<void> {
         if (!isSupabaseConfigured) return
 
         const authStore = useAuthStore()
         if (!authStore.user) return
+
+        // Skip fetch if we already have data (unless forcing refresh)
+        if (hasFetched.value && !forceRefresh && groups.value.length > 0) {
+            return
+        }
 
         loading.value = true
         error.value = null
@@ -68,6 +75,7 @@ export const useGroupStore = defineStore('groups', () => {
             if (fetchError) throw fetchError
 
             groups.value = (data || []).map(mapToLinkGroup)
+            hasFetched.value = true
         } catch (e: any) {
             error.value = e.message
             console.error('Failed to fetch groups:', e)
