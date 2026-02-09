@@ -174,7 +174,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useGroupStore } from '@/stores/groups'
 import { useUrlStore } from '@/stores/urls'
@@ -194,7 +194,6 @@ import BackButton from '@/components/common/BackButton.vue'
 const baseUrl = import.meta.env.VITE_BASE_URL || window.location.origin
 
 const route = useRoute()
-const router = useRouter()
 const authStore = useAuthStore()
 const groupStore = useGroupStore()
 const urlStore = useUrlStore()
