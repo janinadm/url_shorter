@@ -7,8 +7,9 @@ A modern, production-ready URL shortener for content creators and influencers. B
 - 🔗 **Create Short Links** - Turn long URLs into memorable short links with custom aliases
 - 📊 **Detailed Analytics** - Track clicks, browsers, countries, and referrers with auto-refresh
 - 👤 **User Authentication** - Secure signup, login, password recovery, and single-session enforcement
-- 💳 **Tiered Plans** - Free (10 links, 3-day expiry) and Pro (500 links, permanent)
-- 🎨 **Modern UI** - iOS-inspired design with smooth animations
+- 🎨 **Bio Pages** - Create "link in bio" pages with custom slugs, avatar, and multiple links
+- 💳 **Tiered Plans** - Free (10 links, 1 bio page) and Pro (500 links, unlimited bio pages)
+- 🌙 **Theme Support** - Bio pages support default, light, and dark themes
 - 📱 **Responsive** - Works on desktop and mobile
 - 👁️ **Password Visibility Toggle** - Show/hide password in auth forms
 - ⏱️ **Request Timeouts** - 15-second timeout prevents hanging requests
