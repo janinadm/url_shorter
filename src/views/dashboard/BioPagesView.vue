@@ -42,6 +42,7 @@
         <button class="header__menu-btn" @click="sidebarOpen = !sidebarOpen">
           <Menu :size="24" />
         </button>
+        <BackButton to="/dashboard" label="Dashboard" />
         <h1 class="header__title">Bio Pages</h1>
       </header>
 
@@ -198,6 +199,7 @@ import {
   Trash2,
   Upload
 } from 'lucide-vue-next'
+import BackButton from '@/components/common/BackButton.vue'
 
 const baseUrl = import.meta.env.VITE_BASE_URL || window.location.origin
 

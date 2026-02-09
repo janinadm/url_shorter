@@ -39,6 +39,7 @@
         <button class="header__menu-btn" @click="sidebarOpen = !sidebarOpen">
           ☰
         </button>
+        <BackButton to="/dashboard" label="Dashboard" />
         <h1 class="header__title">Account Settings</h1>
       </header>
 
@@ -182,6 +183,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useUrlStore } from '@/stores/urls'
 import { usePlansStore } from '@/stores/plans'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import BackButton from '@/components/common/BackButton.vue'
 
 const route = useRoute()
 
