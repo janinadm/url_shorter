@@ -39,7 +39,6 @@
         <button class="header__menu-btn" @click="sidebarOpen = !sidebarOpen">
           <Menu :size="24" />
         </button>
-        <BackButton to="/dashboard/bio" label="Bio Pages" />
         <h1 class="header__title">{{ group?.title || 'Bio Page' }}</h1>
       </header>
 
@@ -189,7 +188,6 @@ import {
   Camera,
   Pencil
 } from 'lucide-vue-next'
-import BackButton from '@/components/common/BackButton.vue'
 
 const baseUrl = import.meta.env.VITE_BASE_URL || window.location.origin
 

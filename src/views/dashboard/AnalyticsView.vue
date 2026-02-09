@@ -31,7 +31,6 @@
         <button class="header__menu-btn" @click="sidebarOpen = !sidebarOpen">
           <Menu :size="24" />
         </button>
-        <BackButton to="/dashboard" label="Dashboard" />
         <h1 class="header__title">Analytics</h1>
         <p v-if="url" class="header__subtitle">
           {{ url.title || url.shortCode }} • {{ baseUrl }}/r/{{ url.shortCode }}
@@ -159,7 +158,6 @@ import {
   Globe,
   BarChart2
 } from 'lucide-vue-next'
-import BackButton from '@/components/common/BackButton.vue'
 
 Chart.register(...registerables)
 

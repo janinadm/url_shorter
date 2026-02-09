@@ -14,6 +14,10 @@
           <span class="sidebar__link-icon">📊</span>
           Dashboard
         </router-link>
+        <router-link to="/dashboard/bio" class="sidebar__link" @click="sidebarOpen = false">
+          <span class="sidebar__link-icon">👤</span>
+          Bio Pages
+        </router-link>
         <router-link to="/dashboard/settings" class="sidebar__link sidebar__link--active" @click="sidebarOpen = false">
           <span class="sidebar__link-icon">⚙️</span>
           Settings
@@ -39,7 +43,6 @@
         <button class="header__menu-btn" @click="sidebarOpen = !sidebarOpen">
           ☰
         </button>
-        <BackButton to="/dashboard" label="Dashboard" />
         <h1 class="header__title">Account Settings</h1>
       </header>
 
@@ -183,7 +186,6 @@ import { useAuthStore } from '@/stores/auth'
 import { useUrlStore } from '@/stores/urls'
 import { usePlansStore } from '@/stores/plans'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import BackButton from '@/components/common/BackButton.vue'
 
 const route = useRoute()
 
